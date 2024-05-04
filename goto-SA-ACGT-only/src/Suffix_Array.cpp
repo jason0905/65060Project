@@ -183,10 +183,6 @@ T_idx_ Suffix_Array<T_idx_>::step_one(const idx_t* const T, idx_t* const SA, idx
     // process the boring first element, which is LMS and therefore not LML
     step_oneb1_process_cell(SA[0], T, SA, n, alpha_size, n - alpha_size + 1);
     while(idx < n) {
-    for(tmp = 0; tmp < n; ++tmp) {
-        std::cerr << SA[tmp] << " ";
-    }
-    std::cerr << '\n';
         // Note that we don't need to check if idx reached target in the while loop, because last spare cell is processed after last main cell
         if(i > n - alpha_size) {
             // main slots finished, just finish off the spare cells
@@ -240,10 +236,6 @@ T_idx_ Suffix_Array<T_idx_>::step_one(const idx_t* const T, idx_t* const SA, idx
             ++i;
         }
     }
-    for(tmp = 0; tmp < n; ++tmp) {
-        std::cerr << SA[tmp] << " ";
-    }
-    std::cerr << '\n';
 
     // Cleanup step: go through and verify that nobody stole space from later intervals. Corresponds to looping through the LE values and verifying emptiness.
     // Note that flags can mess with cleanup
@@ -298,7 +290,7 @@ T_idx_ Suffix_Array<T_idx_>::step_one(const idx_t* const T, idx_t* const SA, idx
                 tmp = SA[j];
             }
             for(; i < tmp; ++i) {
-                if(SA[i] > n && T[SA[i] - n - 2] > curr) {
+                if(SA[i] > n + 1 && T[SA[i] - n - 2] > curr) {
                     break;
                 } else if(SA[i] < n && T[SA[i]] > curr) {
                     break;
@@ -966,7 +958,7 @@ void Suffix_Array<T_idx_>::step_three(const idx_t* const T, idx_t* const SA, idx
         if(T[i] > T[i + 1] || (T[i] == T[i + 1] && !next_is_small)) {
             next_is_small = false;
             idx = T[i] + n - alpha_size - len_z3;
-            if(SA[idx] > n) {
+            if(SA[idx] > n + 1) {
                 SA[idx] -= n + 2;
             }
         } else {
