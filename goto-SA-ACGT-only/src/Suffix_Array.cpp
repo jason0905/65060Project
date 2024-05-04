@@ -107,6 +107,7 @@ T_idx_ Suffix_Array<T_idx_>::step_one(const idx_t* const T, idx_t* const SA, idx
     }
 
     // Cleanup step: go through and verify that nobody stole space from earlier intervals. Corresponds to looping through the RE values and verifying emptiness.
+    // Flags don't exist yet in main array, so no cleanup needed
     for(i = n - alpha_size + 1, curr = 1; i < n; ++i, ++curr) {
         if(SA[i] < n && SA[SA[i]] != n + 1 && T[SA[SA[i]]] > curr) {
             idx = T[SA[SA[i]]] + n - alpha_size;
@@ -182,6 +183,10 @@ T_idx_ Suffix_Array<T_idx_>::step_one(const idx_t* const T, idx_t* const SA, idx
     // process the boring first element, which is LMS and therefore not LML
     step_oneb1_process_cell(SA[0], T, SA, n, alpha_size, n - alpha_size + 1);
     while(idx < n) {
+    for(tmp = 0; tmp < n; ++tmp) {
+        std::cerr << SA[tmp] << " ";
+    }
+    std::cerr << '\n';
         // Note that we don't need to check if idx reached target in the while loop, because last spare cell is processed after last main cell
         if(i > n - alpha_size) {
             // main slots finished, just finish off the spare cells
@@ -235,13 +240,24 @@ T_idx_ Suffix_Array<T_idx_>::step_one(const idx_t* const T, idx_t* const SA, idx
             ++i;
         }
     }
+    for(tmp = 0; tmp < n; ++tmp) {
+        std::cerr << SA[tmp] << " ";
+    }
+    std::cerr << '\n';
 
     // Cleanup step: go through and verify that nobody stole space from later intervals. Corresponds to looping through the LE values and verifying emptiness.
+    // Note that flags can mess with cleanup
     for(i = n - alpha_size + 1, curr = 1; i < n; ++i, ++curr) {
-        if(SA[i] < n - alpha_size + 1 && SA[SA[i]] != n + 1 && T[SA[SA[i]]] < curr) {
-            idx = T[SA[SA[i]]] + n - alpha_size;
-            SA[idx] = SA[SA[i]] + n + 2;
-            SA[SA[i]] = n + 1;
+        if(SA[i] < n && SA[SA[i]] != n + 1) {
+            tmp = SA[SA[i]];
+            if(tmp > n) {
+                tmp -= n + 2;
+            }
+            if(T[tmp] < curr) {
+                idx = T[SA[SA[i]]] + n - alpha_size;
+                SA[idx] = SA[SA[i]] + n + 2;
+                SA[SA[i]] = n + 1;
+            }
         }
     }
 
@@ -403,6 +419,7 @@ T_idx_ Suffix_Array<T_idx_>::step_one(const idx_t* const T, idx_t* const SA, idx
 
 
     // Cleanup step: go through and verify that nobody stole space from earlier intervals. Corresponds to looping through the RE values and verifying emptiness.
+    // No flags at this point I believe, so this is fine.
     for(i = n - alpha_size + 1, curr = 1; i < n; ++i, ++curr) {
         if(SA[i] < n && SA[SA[i]] != n + 1 && T[SA[SA[i]]] > curr) {
             idx = T[SA[SA[i]]] + n - alpha_size;
