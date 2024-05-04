@@ -330,11 +330,6 @@ T_idx_ Suffix_Array<T_idx_>::step_one(const idx_t* const T, idx_t* const SA, idx
 
     // Note that SA[0], which we left in from before, is in fact an LMS suffix. Also we don't actually need to process that one
     while(idx > n - alpha_size) {
-        std::cerr << i << " " << j << " " << idx << "\n";
-    for(tmp = 0; tmp < n; ++tmp) {
-        std::cerr << SA[tmp] << " ";
-    }
-    std::cerr << '\n';
         // Note that we still only need to check until idx hits minimum: anything earlier in the array than the smallest S/largest LML starting with 1
         // is going to be an L starting with 1 which can only be preceded by S if there's an S starting with 0. In fact, there will be no LML's starting with 1,
         // so there really shouldn't be anything to process by that point.
@@ -981,7 +976,7 @@ void Suffix_Array<T_idx_>::step_three(const idx_t* const T, idx_t* const SA, idx
     // Transition 1&2 of the new thing are unneeded, since we already have things split properly as of the end of transition 8.
     // Thus we start with the new transition 3, which I'll call transition 12=9+3
     // So, transition 12: move the things in X2 into the last alpha_size locations.
-    for(i = len_x1; i < len_x1 + len_x2; ++i) {
+    for(i = len_x1 + len_x2 - 1; i >= len_x1 && i < n; --i) {
         idx = n - alpha_size + T[SA[i]];
         SA[idx] = SA[i];
         if(i != idx) {
