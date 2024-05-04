@@ -27,6 +27,7 @@ private:
     const idx_t n_; // Length of the input text.
     idx_t* const SA_;   // The suffix array.
     const idx_t alpha_size_; // The alphabet size.
+    const bool is_debug_; // True if we want debug messages
 
     // Fields for profiling time.
     typedef std::chrono::high_resolution_clock::time_point time_point_t;
@@ -71,11 +72,11 @@ private:
 public:
 
     // Constructs a suffix array object for the input text `T` of size `n`.
-    Suffix_Array(const idx_t* T, idx_t n, idx_t alpha_size);
+    Suffix_Array(const idx_t* T, idx_t n, idx_t alpha_size, bool is_debug=false);
 
     // Constructs a suffix array for input text `T` of size `n` 
     // given a pointer to the start of the memory for the SA.
-    Suffix_Array(const idx_t* T, idx_t n, idx_t alpha_size, idx_t* const SA);
+    Suffix_Array(const idx_t* T, idx_t n, idx_t alpha_size, idx_t* const SA, bool is_debug=false);
 
     // Copy constructs the suffix array object from `other`.
     Suffix_Array(const Suffix_Array& other);

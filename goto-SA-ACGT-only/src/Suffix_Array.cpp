@@ -13,27 +13,29 @@ namespace Goto_SA
 {
 
 template <typename T_idx_>
-Suffix_Array<T_idx_>::Suffix_Array(const idx_t* const T, const idx_t n, const idx_t alpha_size):
+Suffix_Array<T_idx_>::Suffix_Array(const idx_t* const T, const idx_t n, const idx_t alpha_size, const bool is_debug):
     T_(T),
     n_(n),
     SA_(allocate<idx_t>(n_)),
-    alpha_size_(alpha_size)
+    alpha_size_(alpha_size),
+    is_debug_(is_debug)
 {
 }
 
 
 template <typename T_idx_>
-Suffix_Array<T_idx_>::Suffix_Array(const idx_t* const T, const idx_t n, const idx_t alpha_size, idx_t* const SA):
+Suffix_Array<T_idx_>::Suffix_Array(const idx_t* const T, const idx_t n, const idx_t alpha_size, idx_t* const SA, const bool is_debug):
     T_(T),
     n_(n),
     SA_(SA),
-    alpha_size_(alpha_size)
+    alpha_size_(alpha_size),
+    is_debug_(is_debug)
 {
 }
 
 
 template <typename T_idx_>
-Suffix_Array<T_idx_>::Suffix_Array(const Suffix_Array& other): Suffix_Array(other.T_, other.n_, other.alpha_size_)
+Suffix_Array<T_idx_>::Suffix_Array(const Suffix_Array& other): Suffix_Array(other.T_, other.n_, other.alpha_size_, other.is_debug_)
 {
     std::memcpy(SA_, other.SA_, n_ * sizeof(idx_t));
 }
@@ -54,17 +56,19 @@ T_idx_ Suffix_Array<T_idx_>::step_one(const idx_t* const T, idx_t* const SA, idx
 {
     //Step a: need to somehow move a bunch of indices into SA depending on the values in RE without overwriting RE.
     // Based off of ideas elsewhere, should probably overwrite RE, where I'm being lazy and not storing the first element of RE
-    std::cerr << "Starting T and SA:\n";
     idx_t i, j, k, idx, tmp; // indices into SA
     idx_t curr; // letter of alphabet for comparison purposes
-    for(i = 0; i < n; ++i) {
-        std::cerr << T[i];
+    if(is_debug_) {
+        std::cerr << "Starting T and SA:\n";
+        for(i = 0; i < n; ++i) {
+            std::cerr << T[i];
+        }
+        std::cerr << ' ' << alpha_size << '\n';
+        for(i = 0; i < n; ++i) {
+            std::cerr << SA[i];
+        }
+        std::cerr << '\n';
     }
-    std::cerr << ' ' << alpha_size << '\n';
-    for(i = 0; i < n; ++i) {
-        std::cerr << SA[i];
-    }
-    std::cerr << '\n';
 
     //Step a0: store prefix sum of COUNT-1 into last alpha_size-1 elements of SA, not bothering with the number of 0s
     for(i = n - alpha_size + 1; i < n ;++i) {
@@ -77,11 +81,13 @@ T_idx_ Suffix_Array<T_idx_>::step_one(const idx_t* const T, idx_t* const SA, idx
         SA[i] += SA[i - 1];
     }
 
-    std::cerr << "Step A0 done:\n";
-    for(i = 0; i < n; ++i) {
-        std::cerr << SA[i] << " ";
+    if(is_debug_) {
+        std::cerr << "Step A0 done:\n";
+        for(i = 0; i < n; ++i) {
+            std::cerr << SA[i] << " ";
+        }
+        std::cerr << '\n';
     }
-    std::cerr << '\n';
 
 
     //Step a1: store the LMS-substring start locations into the appropriate approximately RE locations,
@@ -116,11 +122,14 @@ T_idx_ Suffix_Array<T_idx_>::step_one(const idx_t* const T, idx_t* const SA, idx
         }
     }
 
-    std::cerr << "Step A1 done:\n";
-    for(i = 0; i < n; ++i) {
-        std::cerr << SA[i] << " ";
+
+    if(is_debug_) {
+        std::cerr << "Step A1 done:\n";
+        for(i = 0; i < n; ++i) {
+            std::cerr << SA[i] << " ";
+        }
+        std::cerr << '\n';
     }
-    std::cerr << '\n';
 
     // Step b0: Need to turn the RE values into LE values.
     // Easiest way might be to start from each RE value and go left until you hit a stored thing or the location of the next RE to the left
@@ -148,11 +157,13 @@ T_idx_ Suffix_Array<T_idx_>::step_one(const idx_t* const T, idx_t* const SA, idx
         SA[idx] = j + 1;
     }
 
-    std::cerr << "Step B0 done:\n";
-    for(i = 0; i < n; ++i) {
-        std::cerr << SA[i] << " ";
+    if(is_debug_) {
+        std::cerr << "Step B0 done:\n";
+        for(i = 0; i < n; ++i) {
+            std::cerr << SA[i] << " ";
+        }
+        std::cerr << '\n';
     }
-    std::cerr << '\n';
 
     // Step b1: Go through SA in increasing order, and for each suffix we find and add the immediately preceding L-suffix into the SA as well,
     // removing the thing that we just preceded. Will have to maintain invariant that thing in spare slot is always largest thing in array starting with that value.
@@ -253,11 +264,13 @@ T_idx_ Suffix_Array<T_idx_>::step_one(const idx_t* const T, idx_t* const SA, idx
         }
     }
 
-    std::cerr << "Step B1 done:\n";
-    for(i = 0; i < n; ++i) {
-        std::cerr << SA[i] << " ";
+    if(is_debug_) {
+        std::cerr << "Step B1 done:\n";
+        for(i = 0; i < n; ++i) {
+            std::cerr << SA[i] << " ";
+        }
+        std::cerr << '\n';
     }
-    std::cerr << '\n';
 
     // Step c0: Change the LE values back into RE values. Note that unmarked things will need to be dropped, so any LE values currently used as spare cells
     // will need to be carefully considered. If they store a LML (technically any L) then we don't have to find the corresponding RE value, but otherwise
@@ -311,11 +324,13 @@ T_idx_ Suffix_Array<T_idx_>::step_one(const idx_t* const T, idx_t* const SA, idx
         }
     }
 
-    std::cerr << "Step C0 done:\n";
-    for(i = 0; i < n; ++i) {
-        std::cerr << SA[i] << " ";
+    if(is_debug_) {
+        std::cerr << "Step C0 done:\n";
+        for(i = 0; i < n; ++i) {
+            std::cerr << SA[i] << " ";
+        }
+        std::cerr << '\n';
     }
-    std::cerr << '\n';
 
     // Step C1: basically step b1 but going right to left and adding S suffixes instead of L. Also now we won't need to recompute LE or SE ever so we can just
     // delete things if they are processed.
@@ -357,7 +372,6 @@ T_idx_ Suffix_Array<T_idx_>::step_one(const idx_t* const T, idx_t* const SA, idx
                     if(SA[idx] > n) {
                         // Spare cell has element of array, don't need to check for zero because we don't insert zeroes in step c.
                         SA[idx] = n + 2 + step_onec1_process_cell(SA[idx] - n - 2, T, SA, n, alpha_size);
-                        std::cerr << idx << " " << i << " " << SA[idx] << "\n";
                     }
                     --curr;
                     --idx;
@@ -425,11 +439,13 @@ T_idx_ Suffix_Array<T_idx_>::step_one(const idx_t* const T, idx_t* const SA, idx
         }
     }
 
-    std::cerr << "Step C1 done:\n";
-    for(i = 0; i < n; ++i) {
-        std::cerr << SA[i] << " ";
+    if(is_debug_) {
+        std::cerr << "Step C1 done:\n";
+        for(i = 0; i < n; ++i) {
+            std::cerr << SA[i] << " ";
+        }
+        std::cerr << '\n';
     }
-    std::cerr << '\n';
 
     // Step c2: Reorder the stuff in step c1 to be in increasing order and without blank spaces, all on the very left.
     // We do this in two steps: first, we move everything to the far right, removing blank spaces. We keep track of where n - alpha_size + 1 goes,
@@ -479,11 +495,13 @@ T_idx_ Suffix_Array<T_idx_>::step_one(const idx_t* const T, idx_t* const SA, idx
         }
     }
 
-    std::cerr << "Step C2 done:\n";
-    for(j = 0; j < n; ++j) {
-        std::cerr << SA[j] << " ";
+    if(is_debug_) {
+        std::cerr << "Step C2 done:\n";
+        for(tmp = 0; tmp < n; ++tmp) {
+            std::cerr << SA[tmp] << " ";
+        }
+        std::cerr << '\n';
     }
-    std::cerr << '\n';
 
     return i + 1; // Number of LMS strings in the SA. We'll need this number later, no need to recompute.
 }
@@ -547,7 +565,6 @@ T_idx_ Suffix_Array<T_idx_>::step_two_a(const idx_t* const T, idx_t* const SA, i
     SA[j++] = 0;
     prev_finish = n - 1; // just to make sure nobody agrees with the one starting at n-1
     for(i = 1; i < LMS_count; ++i, ++j) {
-        std::cerr << prev_finish << " ";
         // Check if i - 1 and i are the same thing
         // Idea: follow SA[i] until you encounter (a) a decreasing value and (b) an increasing value after that.
         // Then the last thing before the most recent streak of equalities just before the increasing is the end of your LMS string.
@@ -585,7 +602,6 @@ T_idx_ Suffix_Array<T_idx_>::step_two_a(const idx_t* const T, idx_t* const SA, i
         SA[j] = SA[j - 1] + (agrees ? 0 : 1);
         prev_finish = curr_finish;
     }
-    std::cerr << prev_finish << "\n";
 
     if(SA[n - 1] == LMS_count - 1) {
         for(i = LMS_count; i < n; ++i) {
@@ -594,10 +610,6 @@ T_idx_ Suffix_Array<T_idx_>::step_two_a(const idx_t* const T, idx_t* const SA, i
         return 0;
     }
 
-    for(j = 0; j < n; ++j) {
-        std::cerr << SA[j] << " ";
-    }
-    std::cerr << '\n';
 
     ans = SA[n - 1] + 1;
     // Compute the thing we need to recurse on
@@ -631,10 +643,8 @@ T_idx_ Suffix_Array<T_idx_>::step_two_a(const idx_t* const T, idx_t* const SA, i
             }
         }
     }
-    for(j = 0; j < n; ++j) {
-        std::cerr << SA[j] << " ";
-    }
-    std::cerr << '\n';
+
+
     // n > LMS_count so no uint issues
     for(i = n - 1, j = n - 1; j >= n - LMS_count; --i) {
         if(SA[i] > n + 1) {
@@ -647,11 +657,14 @@ T_idx_ Suffix_Array<T_idx_>::step_two_a(const idx_t* const T, idx_t* const SA, i
         SA[i] = LMS_count + 1;
     }
 
-    std::cerr << "Step 2a done and needed to recurse:\n";
-    for(j = 0; j < n; ++j) {
-        std::cerr << SA[j] << " ";
+    if(is_debug_) {
+        std::cerr << "Step 2a done and needed to recurse:\n";
+        for(j = 0; j < n; ++j) {
+            std::cerr << SA[j] << " ";
+        }
+        std::cerr << '\n';
     }
-    std::cerr << '\n';
+
     return ans;
 }
 
@@ -665,16 +678,18 @@ void Suffix_Array<T_idx_>::step_two_b(const idx_t* const T, idx_t* const SA, idx
     idx_t *SA_new = SA, *T_new = SA + n - LMS_count;
     idx_t i, j = LMS_count - 1;
 
+    if(is_debug_) {
     std::cerr << "Step 2b input\n";
-    for(i = 0; i < n; ++i) {
-        std::cerr << T[i] << " ";
-    }
-    std::cerr << '\n';
+        for(i = 0; i < n; ++i) {
+            std::cerr << T[i] << " ";
+        }
+        std::cerr << '\n';
 
-    for(i = 0; i < n; ++i) {
-        std::cerr << SA[i] << " ";
+        for(i = 0; i < n; ++i) {
+            std::cerr << SA[i] << " ";
+        }
+        std::cerr << '\n';
     }
-    std::cerr << '\n';
 
     // First part: replacing the modified T
     bool is_small = true;
@@ -691,18 +706,20 @@ void Suffix_Array<T_idx_>::step_two_b(const idx_t* const T, idx_t* const SA, idx
         }
     }
 
-    for(i = 0; i < n; ++i) {
-        std::cerr << SA[i] << " ";
+    if(is_debug_) {
+        for(i = 0; i < n; ++i) {
+            std::cerr << SA[i] << " ";
+        }
+        std::cerr << '\n';
+        for(i = 0; i < LMS_count; ++i) {
+            std::cerr << T_new[i] << " ";
+        }
+        std::cerr << '\n';
+        for(i = 0; i < LMS_count; ++i) {
+            std::cerr << SA_new[i] << " ";
+        }
+        std::cerr << '\n';
     }
-    std::cerr << '\n';
-    for(i = 0; i < LMS_count; ++i) {
-        std::cerr << T_new[i] << " ";
-    }
-    std::cerr << '\n';
-    for(i = 0; i < LMS_count; ++i) {
-        std::cerr << SA_new[i] << " ";
-    }
-    std::cerr << '\n';
 
     // Now replacing the modified SA
     for(i = 0; i < LMS_count; ++i) {
@@ -714,11 +731,13 @@ void Suffix_Array<T_idx_>::step_two_b(const idx_t* const T, idx_t* const SA, idx
         SA[i] = n + 1;
     }
 
-    std::cerr << "step 2b output\n";
-    for(i = 0; i < n; ++i) {
-        std::cerr << SA[i] << " ";
+    if(is_debug_) {
+        std::cerr << "step 2b output\n";
+        for(i = 0; i < n; ++i) {
+            std::cerr << SA[i] << " ";
+        }
+        std::cerr << '\n';
     }
-    std::cerr << '\n';
 }
 
 
@@ -729,19 +748,21 @@ void Suffix_Array<T_idx_>::step_three(const idx_t* const T, idx_t* const SA, idx
         // SA should already have 0 in first element so we're good
         return;
     }
-    std::cerr << "Starting Step 3: T and SA:\n";
     idx_t i, j, k, l, idx, tmp; // indices into SA
     idx_t len_z1 = 0, len_z2 = 0, len_z3, len_x1 = 0, len_x2 = 0, len_x3;
     idx_t curr, val1, val2, val3, val4; // letter of alphabet for comparison purposes
 
-    for(i = 0; i < n; ++i) {
-        std::cerr << T[i];
+    if(is_debug_) {
+        std::cerr << "Starting Step 3: T and SA:\n";
+        for(i = 0; i < n; ++i) {
+            std::cerr << T[i];
+        }
+        std::cerr << ' ' << alpha_size << '\n';
+        for(i = 0; i < n; ++i) {
+            std::cerr << SA[i] << " ";
+        }
+        std::cerr << '\n';
     }
-    std::cerr << ' ' << alpha_size << '\n';
-    for(i = 0; i < n; ++i) {
-        std::cerr << SA[i] << " ";
-    }
-    std::cerr << '\n';
 
     // Transition one: shift SA_LMS to the end
 
@@ -759,11 +780,14 @@ void Suffix_Array<T_idx_>::step_three(const idx_t* const T, idx_t* const SA, idx
         SA[j] = SA[i];
         SA[i] = n + 1;
     }
-    std::cerr << "transition one output\n";
-    for(i = 0; i < n; ++i) {
-        std::cerr << SA[i] << " ";
+
+    if(is_debug_) {
+        std::cerr << "transition one output\n";
+        for(i = 0; i < n; ++i) {
+            std::cerr << SA[i] << " ";
+        }
+        std::cerr << '\n';
     }
-    std::cerr << '\n';
 
     // Transition two: Move the smallest LMS of each interval to the front of the SA, splitting the LMS-es into
     // arrays Z1 and Z2
@@ -776,11 +800,13 @@ void Suffix_Array<T_idx_>::step_three(const idx_t* const T, idx_t* const SA, idx
             SA[j--] = tmp;
         }
     }
-    std::cerr << "transition two output\n";
-    for(i = 0; i < n; ++i) {
-        std::cerr << SA[i] << " ";
+    if(is_debug_) {
+        std::cerr << "transition two output\n";
+        for(i = 0; i < n; ++i) {
+            std::cerr << SA[i] << " ";
+        }
+        std::cerr << '\n';
     }
-    std::cerr << '\n';
 
     // Transition three: Move the small LMSes from Z1 into locations in the front to form a "spares" array.
     // This array will eventually contain some other things too later but for now contains the smallest LMS suffix
@@ -798,11 +824,13 @@ void Suffix_Array<T_idx_>::step_three(const idx_t* const T, idx_t* const SA, idx
             idx = T[SA[i]];
         }
     }
-    std::cerr << "transition three output\n";
-    for(i = 0; i < n; ++i) {
-        std::cerr << SA[i] << " ";
+    if(is_debug_) {
+        std::cerr << "transition three output\n";
+        for(i = 0; i < n; ++i) {
+            std::cerr << SA[i] << " ";
+        }
+        std::cerr << '\n';
     }
-    std::cerr << '\n';
 
     // Transition four (a): Compute a ``type'' array storing whether or not there is an L-suffix starting with the given character.
     // We can store this as flags in the thing at the front.
@@ -843,11 +871,13 @@ void Suffix_Array<T_idx_>::step_three(const idx_t* const T, idx_t* const SA, idx
             SA[i] = n + 1;
         }
     }
-    std::cerr << "transition four output\n";
-    for(i = 0; i < n; ++i) {
-        std::cerr << SA[i] << " ";
+    if(is_debug_) {
+        std::cerr << "transition four output\n";
+        for(i = 0; i < n; ++i) {
+            std::cerr << SA[i] << " ";
+        }
+        std::cerr << '\n';
     }
-    std::cerr << '\n';
 
     // Transition five is a stable merge sort that is technically not needed if we just iterate through more things in parallel. So we skip it.
     // Transition six: We fill the blanks in the spares array with LE values for just the L suffixes (minus spare slots).
@@ -872,11 +902,13 @@ void Suffix_Array<T_idx_>::step_three(const idx_t* const T, idx_t* const SA, idx
         }
     }
 
-    std::cerr << "transition six output\n";
-    for(i = 0; i < n; ++i) {
-        std::cerr << SA[i] << " ";
+    if(is_debug_) {
+        std::cerr << "transition six output\n";
+        for(i = 0; i < n; ++i) {
+            std::cerr << SA[i] << " ";
+        }
+        std::cerr << '\n';
     }
-    std::cerr << '\n';
 
     // Transition seven: Use the same idea as step 1b to store all the L-suffixes in sorted order,
     // with the largest L-suffix of each interval ending up in the spares array.
@@ -944,11 +976,13 @@ void Suffix_Array<T_idx_>::step_three(const idx_t* const T, idx_t* const SA, idx
         }
     }
 
-    std::cerr << "transition seven output\n";
-    for(i = 0; i < n; ++i) {
-        std::cerr << SA[i] << " ";
+    if(is_debug_) {
+        std::cerr << "transition seven output\n";
+        for(i = 0; i < n; ++i) {
+            std::cerr << SA[i] << " ";
+        }
+        std::cerr << '\n';
     }
-    std::cerr << '\n';
 
     // Transition eight: Leave X1 alone, move all the L suffixes in Y into X2, then delete everything outside of X.
     // We do this in three steps: first we re-flag the L suffixes in Y by decreasing them by n + 2, then we do the move, then the delete.
@@ -975,11 +1009,13 @@ void Suffix_Array<T_idx_>::step_three(const idx_t* const T, idx_t* const SA, idx
         SA[i] = n + 1;
     }
 
-    std::cerr << "transition eight output\n";
-    for(i = 0; i < n; ++i) {
-        std::cerr << SA[i] << " ";
+    if(is_debug_) {
+        std::cerr << "transition eight output\n";
+        for(i = 0; i < n; ++i) {
+            std::cerr << SA[i] << " ";
+        }
+        std::cerr << '\n';
     }
-    std::cerr << '\n';
 
     // Now onto sorting the S suffixes in:
     // Transition 1&2 of the new thing are unneeded, since we already have things split properly as of the end of transition 8.
@@ -993,11 +1029,13 @@ void Suffix_Array<T_idx_>::step_three(const idx_t* const T, idx_t* const SA, idx
         }
     }
 
-    std::cerr << "transition twelve output\n";
-    for(i = 0; i < n; ++i) {
-        std::cerr << SA[i] << " ";
+    if(is_debug_) {
+        std::cerr << "transition twelve output\n";
+        for(i = 0; i < n; ++i) {
+            std::cerr << SA[i] << " ";
+        }
+        std::cerr << '\n';
     }
-    std::cerr << '\n';
 
     // Transition 13 (a): Compute a ``type'' array storing whether or not there is an S-suffix starting with the given character.
     // We can store this as flags in the thing at the back.
@@ -1036,11 +1074,13 @@ void Suffix_Array<T_idx_>::step_three(const idx_t* const T, idx_t* const SA, idx
             SA[j] = n + 1;
         }
     }
-    std::cerr << "transition 13 output\n";
-    for(i = 0; i < n; ++i) {
-        std::cerr << SA[i] << " ";
+    if(is_debug_) {
+        std::cerr << "transition 13 output\n";
+        for(i = 0; i < n; ++i) {
+            std::cerr << SA[i] << " ";
+        }
+        std::cerr << '\n';
     }
-    std::cerr << '\n';
 
     // Transition 14: Sort the X3 array. We ignore this because we can just use two things to iterate at once
     // Transition 15: Replace the blanks in the spare array with the appropriate RE values.
@@ -1071,11 +1111,13 @@ void Suffix_Array<T_idx_>::step_three(const idx_t* const T, idx_t* const SA, idx
     }
     SA[len_x3 + alpha_size - 1] = n - 1;
 
-    std::cerr << "transition 15 output\n";
-    for(i = 0; i < n; ++i) {
-        std::cerr << SA[i] << " ";
+    if(is_debug_) {
+        std::cerr << "transition 15 output\n";
+        for(i = 0; i < n; ++i) {
+            std::cerr << SA[i] << " ";
+        }
+        std::cerr << '\n';
     }
-    std::cerr << '\n';
 
     // Transition 16: Similar to step 1c: go right to left to add a bunch of S suffixes into the array.
     i = n - 1;
@@ -1149,11 +1191,13 @@ void Suffix_Array<T_idx_>::step_three(const idx_t* const T, idx_t* const SA, idx
         }
     }
 
-    std::cerr << "transition 16 output\n";
-    for(i = 0; i < n; ++i) {
-        std::cerr << SA[i] << " ";
+    if(is_debug_) {
+        std::cerr << "transition 16 output\n";
+        for(i = 0; i < n; ++i) {
+            std::cerr << SA[i] << " ";
+        }
+        std::cerr << '\n';
     }
-    std::cerr << '\n';
 
     // Remaining steps: Merge the suffix arrays two at a time.
     // Note that the suffix arrays on the left always has smaller values than the suffix arrays on the right.
@@ -1191,11 +1235,13 @@ void Suffix_Array<T_idx_>::step_three(const idx_t* const T, idx_t* const SA, idx
         SA[idx] = L[idx];
     }
 
-    std::cerr << "Step 3 output\n";
-    for(i = 0; i < n; ++i) {
-        std::cerr << SA[i] << " ";
+    if(is_debug_) {
+        std::cerr << "Step 3 output\n";
+        for(i = 0; i < n; ++i) {
+            std::cerr << SA[i] << " ";
+        }
+        std::cerr << '\n';
     }
-    std::cerr << '\n';
 }
 
 
