@@ -91,8 +91,8 @@ T_idx_ Suffix_Array<T_idx_>::step_one(const idx_t* const T, idx_t* const SA, idx
 
     // Note that the last thing is always an LMS string and also the only LMS string starting from 0,
     // which we store in the first location to prevent everything from being one-indexed
-    SA[0] = n - 1;
     SA[n - alpha_size] = n + 1;
+    SA[0] = n - 1;
     bool next_is_small = false;
     for(i = n - 3; i < n; --i) {
         if(T[i] < T[i + 1]) {
@@ -622,6 +622,7 @@ T_idx_ Suffix_Array<T_idx_>::step_two_a(const idx_t* const T, idx_t* const SA, i
         std::cerr << SA[j] << " ";
     }
     std::cerr << '\n';
+    // n > LMS_count so no uint issues
     for(i = n - 1, j = n - 1; j >= n - LMS_count; --i) {
         if(SA[i] > n + 1) {
             tmp_rank = SA[i] - n - 2;
@@ -711,6 +712,10 @@ void Suffix_Array<T_idx_>::step_two_b(const idx_t* const T, idx_t* const SA, idx
 template <typename T_idx_>
 void Suffix_Array<T_idx_>::step_three(const idx_t* const T, idx_t* const SA, idx_t n, idx_t alpha_size)
 {
+    if(n == 1) {
+        // SA should already have 0 in first element so we're good
+        return;
+    }
     std::cerr << "Starting Step 3: T and SA:\n";
     idx_t i, j, k, l, idx, tmp; // indices into SA
     idx_t len_z1 = 0, len_z2 = 0, len_z3, len_x1 = 0, len_x2 = 0, len_x3;
@@ -750,7 +755,8 @@ void Suffix_Array<T_idx_>::step_three(const idx_t* const T, idx_t* const SA, idx
     // Transition two: Move the smallest LMS of each interval to the front of the SA, splitting the LMS-es into
     // arrays Z1 and Z2
 
-    for(i = n - 1, j = n - 1; SA[i - 1] != n + 1; --i) {
+    // basically since n > LMS_count this is fine
+    for(i = n - 1, j = n - 1; i >= n - len_z1 - len_z2; --i) {
         if(T[SA[i - 1]] == T[SA[i]]) {
             tmp = SA[i];
             SA[i] = SA[j];
@@ -766,6 +772,7 @@ void Suffix_Array<T_idx_>::step_three(const idx_t* const T, idx_t* const SA, idx
     // Transition three: Move the small LMSes from Z1 into locations in the front to form a "spares" array.
     // This array will eventually contain some other things too later but for now contains the smallest LMS suffix
     // for each character that has LMS suffixes starting with it, and empties everywhere else.
+    // basically since n > LMS_count this is fine
     for(i = n - len_z2 - 1; i >= n - len_z2 - len_z1; --i) {
         idx = T[SA[i]];
         while(idx != i) {
@@ -809,7 +816,7 @@ void Suffix_Array<T_idx_>::step_three(const idx_t* const T, idx_t* const SA, idx
     // Transition four (b): Move the suffixes with flagged type to the spot and reverse the flag definition
     // That is, things without L's have n + 2 added to them, because we usually add n + 2 to things that have indices stored in them.
     // Note that things with L's are filled with zeros now so that we can do the prefix sums later.
-    for(j = n - len_z3 - 1, i = alpha_size - 1, idx = n - len_z2 - 1; j >= n - len_z3 - alpha_size; --i, --j) {
+    for(j = n - len_z3 - 1, i = alpha_size - 1, idx = n - len_z2 - 1; j >= n - len_z3 - alpha_size && j < n; --i, --j) {
         if(SA[i] > n + 1) {
             if(SA[i] != 2 * n + 3) {
                 SA[idx] = SA[i] - n - 2;
@@ -1073,6 +1080,7 @@ void Suffix_Array<T_idx_>::step_three(const idx_t* const T, idx_t* const SA, idx
         val4 = 0;
     }
 
+    // This loop breaks if string is just 0?
     while(i >= len_x3 + alpha_size - 1) {
         // Last thing we need to process will be the first element of Z-whatever.
         if(SA[i] == n + 1) {
