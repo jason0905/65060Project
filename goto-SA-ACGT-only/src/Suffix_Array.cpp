@@ -235,10 +235,6 @@ T_idx_ Suffix_Array<T_idx_>::step_one(const idx_t* const T, idx_t* const SA, idx
             ++i;
         }
     }
-    for(tmp = 0; tmp < n; ++tmp) {
-        std::cerr << SA[tmp] << " ";
-    }
-    std::cerr << '\n';
 
     // Cleanup step: go through and verify that nobody stole space from later intervals. Corresponds to looping through the LE values and verifying emptiness.
     for(i = n - alpha_size + 1, curr = 1; i < n; ++i, ++curr) {
@@ -301,6 +297,11 @@ T_idx_ Suffix_Array<T_idx_>::step_one(const idx_t* const T, idx_t* const SA, idx
         curr++;
         idx++;
     }
+    for(; i <= n - alpha_size; ++i) {
+        if(SA[i] < n) {
+            SA[i] = n + 1;
+        }
+    }
 
     std::cerr << "Step C0 done:\n";
     for(i = 0; i < n; ++i) {
@@ -329,6 +330,11 @@ T_idx_ Suffix_Array<T_idx_>::step_one(const idx_t* const T, idx_t* const SA, idx
 
     // Note that SA[0], which we left in from before, is in fact an LMS suffix. Also we don't actually need to process that one
     while(idx > n - alpha_size) {
+        std::cerr << i << " " << j << " " << idx << "\n";
+    for(tmp = 0; tmp < n; ++tmp) {
+        std::cerr << SA[tmp] << " ";
+    }
+    std::cerr << '\n';
         // Note that we still only need to check until idx hits minimum: anything earlier in the array than the smallest S/largest LML starting with 1
         // is going to be an L starting with 1 which can only be preceded by S if there's an S starting with 0. In fact, there will be no LML's starting with 1,
         // so there really shouldn't be anything to process by that point.
@@ -348,6 +354,7 @@ T_idx_ Suffix_Array<T_idx_>::step_one(const idx_t* const T, idx_t* const SA, idx
                     if(SA[idx] > n) {
                         // Spare cell has element of array, don't need to check for zero because we don't insert zeroes in step c.
                         SA[idx] = n + 2 + step_onec1_process_cell(SA[idx] - n - 2, T, SA, n, alpha_size);
+                        std::cerr << idx << " " << i << " " << SA[idx] << "\n";
                     }
                     --curr;
                     --idx;
@@ -431,7 +438,9 @@ T_idx_ Suffix_Array<T_idx_>::step_one(const idx_t* const T, idx_t* const SA, idx
     for(i = n - 1; i > n - alpha_size; --i) {
         if(SA[i] != n + 1) {
             SA[--j] = SA[i];
-            SA[i] = n + 1;
+            if(j != i) {
+                SA[i] = n + 1;
+            }
         }
     }
     idx = j;
@@ -439,7 +448,9 @@ T_idx_ Suffix_Array<T_idx_>::step_one(const idx_t* const T, idx_t* const SA, idx
     for(; i > 0; --i) {
         if(SA[i] != n + 1) {
             SA[--j] = SA[i];
-            SA[i] = n + 1;
+            if(j != i) {
+                SA[i] = n + 1;
+            }
         }
     }
     //gonna be lazy and not deal with SA[0] because we'd refill it with the same value immediately.
@@ -532,27 +543,24 @@ T_idx_ Suffix_Array<T_idx_>::step_two_a(const idx_t* const T, idx_t* const SA, i
     SA[j++] = 0;
     prev_finish = n - 1; // just to make sure nobody agrees with the one starting at n-1
     for(i = 1; i < LMS_count; ++i, ++j) {
+        std::cerr << prev_finish << " ";
         // Check if i - 1 and i are the same thing
         // Idea: follow SA[i] until you encounter (a) a decreasing value and (b) an increasing value after that.
         // Then the last thing before the most recent streak of equalities just before the increasing is the end of your LMS string.
         // Once we know where prev and curr finish we can do stuff.
         found_decrease = false;
         curr_streak_start = SA[i];
-        for(k = SA[i]; k < n; ++k) {
-            if(T[k] > T[k - 1]) {// Don't need to worry about zero here because all LMS are bigger than 0
+        for(k = SA[i] + 1; k < n - 1; ++k) {
+            if(T[k] > T[k + 1]) {// Don't need to worry about zero here because all LMS are bigger than 0
                 found_decrease = true;
-                curr_streak_start = k;
-            } else if(T[k] < T[k - 1]) {
+                curr_streak_start = k + 1;
+            } else if(T[k] < T[k + 1]) {
                 if(found_decrease) {
-                    // We passed the next LMS now, and curr_streak_start is the previous LMS value unless previous streak had length 1
-                    if(curr_streak_start == k - 1) {
-                        curr_finish = k;
-                    } else {
-                        curr_finish = curr_streak_start;
-                    }
+                    // We passed the next LMS now, and curr_streak_start is the previous LMS value
+                    curr_finish = curr_streak_start;
                     break;
                 }
-                curr_streak_start = k;
+                curr_streak_start = k + 1;
             }
         }
         if(k == n) {
@@ -573,6 +581,7 @@ T_idx_ Suffix_Array<T_idx_>::step_two_a(const idx_t* const T, idx_t* const SA, i
         SA[j] = SA[j - 1] + (agrees ? 0 : 1);
         prev_finish = curr_finish;
     }
+    std::cerr << prev_finish << "\n";
 
     if(SA[n - 1] == LMS_count - 1) {
         for(i = LMS_count; i < n; ++i) {
@@ -975,7 +984,9 @@ void Suffix_Array<T_idx_>::step_three(const idx_t* const T, idx_t* const SA, idx
     for(i = len_x1; i < len_x1 + len_x2; ++i) {
         idx = n - alpha_size + T[SA[i]];
         SA[idx] = SA[i];
-        SA[i] = n + 1;
+        if(i != idx) {
+            SA[i] = n + 1;
+        }
     }
 
     std::cerr << "transition twelve output\n";
