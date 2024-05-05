@@ -122,6 +122,18 @@ T_idx_ Suffix_Array<T_idx_>::step_one(const idx_t* const T, idx_t* const SA, idx
         }
     }
 
+    // Adding some flags for things
+    for(i = 0; i < n - alpha_size + 1; ++i) {
+        if(SA[i] < n) {
+            SA[i] += 2 * n + 4;
+        }
+    }
+    for(i = n - alpha_size + 1; i < n; ++i) { 
+        if(SA[i] > n + 1) {
+            SA[i] += 2 * n + 4;
+        }
+    }
+
 
     if(is_debug_) {
         std::cerr << "Step A1 done:\n";
@@ -134,7 +146,7 @@ T_idx_ Suffix_Array<T_idx_>::step_one(const idx_t* const T, idx_t* const SA, idx
     // Step b0: Need to turn the RE values into LE values.
     // Easiest way might be to start from each RE value and go left until you hit a stored thing or the location of the next RE to the left
     // In particular the replaced RE values don't need to turn into LE values
-    // TODO: Fix this so that it dwon't run into issues when n = alpha_size? Or just ignore those cases for now? could just fix things by using signed ints
+    // TODO: Fix this so that itwon't run into issues when n = alpha_size? Or just ignore those cases for now? could just fix things by using signed ints
 
     for(i = n - 1; i > n - alpha_size; --i) {
         if(SA[i] < n) {
@@ -192,25 +204,30 @@ T_idx_ Suffix_Array<T_idx_>::step_one(const idx_t* const T, idx_t* const SA, idx
     for(; j < n && SA[j] > n; ++j) {}
 
     // process the boring first element, which is LMS and therefore not LML
+    // TODO: Verify that flagged values never kill everything when I check SA[i] values
     step_oneb1_process_cell(SA[0], T, SA, n, alpha_size, n - alpha_size + 1);
     while(idx < n) {
+        k = SA[i];
+        while(k > n + 1) {
+            k -= n + 2;
+        }
         // Note that we don't need to check if idx reached target in the while loop, because last spare cell is processed after last main cell
         if(i > n - alpha_size) {
             // main slots finished, just finish off the spare cells
             if(SA[idx] > n + 2) {
                 // Spare cell has nonzero element of array
-                SA[idx] += step_oneb1_process_cell(SA[idx] - n - 2, T, SA, n, alpha_size, n - alpha_size + 1);
+                SA[idx] += step_oneb1_process_cell(SA[idx], T, SA, n, alpha_size, n - alpha_size + 1);
             }
             ++curr;
             ++idx;
-        } else if(SA[i] == n + 1) {
+        } else if(k == n + 1) {
             for(; j < n && SA[j] > n; ++j) {}
             if(j < n && SA[j] <= i) {
                 // We don't know if we can process this empty cell, move in spare array until we catch up
                 while(idx < j) {
                     if(SA[idx] > n + 2) {
                         // Spare cell has nonzero element of array
-                        SA[idx] += step_oneb1_process_cell(SA[idx] - n - 2, T, SA, n, alpha_size, n - alpha_size + 1);
+                        SA[idx] += step_oneb1_process_cell(SA[idx], T, SA, n, alpha_size, n - alpha_size + 1);
                     }
                     ++curr;
                     ++idx;
@@ -220,17 +237,22 @@ T_idx_ Suffix_Array<T_idx_>::step_one(const idx_t* const T, idx_t* const SA, idx
                 // We can process this cell, which is empty, so just skip
                 ++i;
             }
-        } else if(T[SA[i]] > curr) {
+        } else if(T[k] > curr) {
             // Use spare cell
             if(SA[idx] > n + 2) {
                 // Spare cell has nonzero element of array
-                SA[idx] += step_oneb1_process_cell(SA[idx] - n - 2, T, SA, n, alpha_size, n - alpha_size + 1);
+                SA[idx] += step_oneb1_process_cell(SA[idx], T, SA, n, alpha_size, n - alpha_size + 1);
             }
             ++curr;
             ++idx;
         } else {
-            // Use main cell
-            if(SA[i] > 0) {
+            if(T[k] == curr && SA[i] > 2 * n + 3 && SA[idx] > n + 2 && SA[idx] < 2 * n + 4) {
+                // Main cell contains LMS, spare cell is LML, so swap main cell and spare cell 
+                tmp = SA[i];
+                SA[i--] = SA[idx] - n - 2;
+                SA[idx] = tmp + n + 2;
+            } else if(SA[i] > 0) {
+                // Use main cell
                 tmp = SA[i];
                 k = step_oneb1_process_cell(SA[i], T, SA, n, alpha_size, n - alpha_size + 1);
                 if(SA[i] == tmp) {
@@ -248,10 +270,22 @@ T_idx_ Suffix_Array<T_idx_>::step_one(const idx_t* const T, idx_t* const SA, idx
         }
     }
 
+    // First Cleanup step: anything excessively large gets decreased by 2n + 4
+    for(i = 0; i < n - alpha_size + 1; ++i) {
+        if(SA[i] > 2 * n + 3) {
+            SA[i] -= 2 * n + 4;
+        }
+    }
+    for(i = n - alpha_size + 1; i < n; ++i) {
+        if(SA[i] > 3 * n + 5) {
+            SA[i] -= 2 * n + 4;
+        }
+    }
+
     // Cleanup step: go through and verify that nobody stole space from later intervals. Corresponds to looping through the LE values and verifying emptiness.
     // Note that flags can mess with cleanup
     for(i = n - alpha_size + 1, curr = 1; i < n; ++i, ++curr) {
-        if(SA[i] < n && SA[SA[i]] != n + 1) {
+        if(SA[i] < n - alpha_size + 1 && SA[SA[i]] != n + 1) {
             tmp = SA[SA[i]];
             if(tmp > n) {
                 tmp -= n + 2;
@@ -352,6 +386,9 @@ T_idx_ Suffix_Array<T_idx_>::step_one(const idx_t* const T, idx_t* const SA, idx
     for(; j > n - alpha_size && SA[j] > n; --j) {}
 
     // Note that SA[0], which we left in from before, is in fact an LMS suffix. Also we don't actually need to process that one
+    // Bug: The spare array already contains an LML, but there are LMS things in that interval that are bigger, which needs to be added somehow.
+    // Idea: When scanning LTR to find LMLs, whenever I see an LMS I can swap it into the spare slot if spare slot is full
+    // In particular, LMS needs to be flagged, say with 2n + 4 extra
     while(idx > n - alpha_size) {
         // Note that we still only need to check until idx hits minimum: anything earlier in the array than the smallest S/largest LML starting with 1
         // is going to be an L starting with 1 which can only be preceded by S if there's an S starting with 0. In fact, there will be no LML's starting with 1,
@@ -427,7 +464,7 @@ T_idx_ Suffix_Array<T_idx_>::step_one(const idx_t* const T, idx_t* const SA, idx
     // Cleanup step: go through and verify that nobody stole space from earlier intervals. Corresponds to looping through the RE values and verifying emptiness.
     // No flags at this point I believe, so this is fine.
     for(i = n - alpha_size + 1, curr = 1; i < n; ++i, ++curr) {
-        if(SA[i] < n && SA[SA[i]] != n + 1 && T[SA[SA[i]]] > curr) {
+        if(SA[i] < n - alpha_size + 1 && SA[SA[i]] != n + 1 && T[SA[SA[i]]] > curr) {
             idx = T[SA[SA[i]]] + n - alpha_size;
             SA[idx] = SA[SA[i]] + n + 2;
             SA[SA[i]] = n + 1;
@@ -510,6 +547,9 @@ T_idx_ Suffix_Array<T_idx_>::step_one(const idx_t* const T, idx_t* const SA, idx
 template <typename T_idx_>
 T_idx_ Suffix_Array<T_idx_>::step_oneb1_process_cell(idx_t target, const idx_t* const T, idx_t* const SA, idx_t n, idx_t alpha_size, idx_t arr_bound)
 {
+    while(target > n) {
+        target -= n + 2;
+    }
     if(T[target - 1] >= T[target]) {
         insert_via_LE(target - 1, n - alpha_size, T, SA, n, arr_bound);
         return 0;
@@ -789,17 +829,30 @@ void Suffix_Array<T_idx_>::step_three(const idx_t* const T, idx_t* const SA, idx
         std::cerr << '\n';
     }
 
-    // Transition two: Move the smallest LMS of each interval to the front of the SA, splitting the LMS-es into
+    // Transition two: Move the smallest LMS of each interval to the front of the SA_LMS, splitting the LMS-es into
     // arrays Z1 and Z2
 
     // basically since n > LMS_count this is fine
-    for(i = n - 1, j = n - 1; i >= n - len_z1 - len_z2; --i) {
-        if(T[SA[i - 1]] == T[SA[i]]) {
-            tmp = SA[i];
-            SA[i] = SA[j];
-            SA[j--] = tmp;
+    // Move the smallest LMS of each interval to the front of the SA
+    for(i = n - 1, j = len_z1 - 1; i > n - len_z1 - len_z2; --i) {
+        if(T[SA[i]] != T[SA[i - 1]]) {
+            SA[j--] = SA[i];
+            SA[i] = n + 1;
         }
     }
+    SA[0] = SA[n - len_z1 - len_z2];
+    // Move the larger LMSes to be contiguous
+    for(i = n - 1, j = n - 1; i > n - len_z1 - len_z2; --i) {
+        if(SA[i] != n + 1) {
+            SA[j--] = SA[i];
+        }
+    }
+    // Move the smaller LMSes to be right in front of the larger ones
+    for(i = n - len_z2 - 1, j = len_z1 - 1; i >= n - len_z2 - len_z1; --i, --j) {
+        SA[i] = SA[j];
+        SA[j] = n + 1;
+    }
+
     if(is_debug_) {
         std::cerr << "transition two output\n";
         for(i = 0; i < n; ++i) {

@@ -48,11 +48,10 @@ int main(int argc, char* argv[])
     const std::string ip_path(argv[1]);
     const std::string op_path(argv[2]);
 
-    static uint64_t* text = static_cast<uint64_t*>(std::malloc(10 * sizeof(uint64_t)));
+    static uint64_t* text = static_cast<uint64_t*>(std::malloc(17 * sizeof(uint64_t)));
     // read_input(ip_path, text);
     // hard-coding test string
 
-    /*
     text[0] = 4;
     text[1] = 5;
     text[2] = 3;
@@ -83,7 +82,7 @@ int main(int argc, char* argv[])
     text[27] = 5;
     text[28] = 5;
     text[29] = 0;
-    */
+
     /*
     text[0] = 5;
     text[1] = 4;
@@ -103,13 +102,17 @@ int main(int argc, char* argv[])
     text[15] = 5;
     text[16] = 0;
     */
-    /*text[0] = 5;
+
+    /*
+    text[0] = 5;
     text[1] = 4;
     text[2] = 3;
     text[3] = 2;
     text[4] = 1;
-    text[5] = 0;*/
+    text[5] = 0;
+    */
 
+    /*
     text[0] = 4;
     text[1] = 5;
     text[2] = 3;
@@ -120,10 +123,57 @@ int main(int argc, char* argv[])
     text[7] = 3;
     text[8] = 5;
     text[9] = 0;
+    */
+
+    /*
+    text[0] = 5;
+    text[1] = 4;
+    text[2] = 3;
+    text[3] = 5;
+    text[4] = 4;
+    text[5] = 5;
+    text[6] = 1;
+    text[7] = 4;
+    text[8] = 1;
+    text[9] = 4;
+    text[10] = 2;
+    text[11] = 4;
+    text[12] = 2;
+    text[13] = 4;
+    text[14] = 2;
+    text[15] = 4;
+    text[16] = 0;
+    */
+
+    /*
+    text[0] = 3;
+    text[1] = 5;
+    text[2] = 4;
+    text[3] = 5;
+    text[4] = 1;
+    text[5] = 4;
+    text[6] = 1;
+    text[7] = 4;
+    text[8] = 2;
+    text[9] = 4;
+    text[10] = 2;
+    text[11] = 4;
+    text[12] = 2;
+    text[13] = 4;
+    text[14] = 0;
+    */
+    /*text[0] = 5;
+    text[1] = 6;
+    text[2] = 1;
+    text[3] = 2;
+    text[4] = 4;
+    text[5] = 4;
+    text[6] = 3;
+    text[7] = 0;*/
 
     std::ofstream output(op_path);
 
-    std::size_t n = 10;
+    std::size_t n = 30;
     std::cerr << "Text length: " << n << ".\n";
     Goto_SA::Suffix_Array<uint64_t> suf_arr(text, n, 6);
     suf_arr.construct();
