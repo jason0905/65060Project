@@ -185,7 +185,6 @@ int main(int argc, char* argv[])
     text[10] = 0;
     */
 
-    /*
     text[0] = 3;
     text[1] = 5;
     text[2] = 1;
@@ -348,7 +347,7 @@ int main(int argc, char* argv[])
     text[159] = 5;
     text[160] = 1;
     text[161] = 4;
-    text[162] = 0;*/
+    text[162] = 0;
 
     /*
     text[0] = 3;
@@ -390,7 +389,8 @@ int main(int argc, char* argv[])
     text[36] = 19;
     text[37] = 7;
     text[38] = 8;
-    text[39] = 0;*/
+    text[39] = 0;
+    */
 
     /*text[0] = 2;
     text[1] = 5;
@@ -445,7 +445,7 @@ int main(int argc, char* argv[])
     text[8] = 2;
     text[9] = 0;*/
 
-    text[0] = 5;
+    /*text[0] = 5;
     text[1] = 1;
     text[2] = 1;
     text[3] = 5;
@@ -495,7 +495,7 @@ int main(int argc, char* argv[])
     text[47] = 1;
     text[48] = 5;
     text[49] = 5;
-    text[50] = 0;
+    text[50] = 0;*/
 
     /*text[0] = 3;
     text[1] = 7;
@@ -512,9 +512,75 @@ int main(int argc, char* argv[])
     text[12] = 0;*/
 
 
+    /*
+    text[0] = 5;
+    text[1] = 5;
+    text[2] = 5;
+    text[3] = 5;
+    text[4] = 5;
+    text[5] = 3;
+    text[6] = 1;
+    text[7] = 5;
+    text[8] = 3;
+    text[9] = 1;
+    text[10] = 2;
+    text[11] = 3;
+    text[12] = 1;
+    text[13] = 5;
+    text[14] = 5;
+    text[15] = 5;
+    text[16] = 2;
+    text[17] = 1;
+    text[18] = 1;
+    text[19] = 5;
+    text[20] = 5;
+    text[21] = 4;
+    text[22] = 5;
+    text[23] = 5;
+    text[24] = 5;
+    text[25] = 5;
+    text[26] = 5;
+    text[27] = 3;
+    text[28] = 1;
+    text[29] = 5;
+    text[30] = 3;
+    text[31] = 1;
+    text[32] = 2;
+    text[33] = 3;
+    text[34] = 1;
+    text[35] = 5;
+    text[36] = 5;
+    text[37] = 5;
+    text[38] = 2;
+    text[39] = 1;
+    text[40] = 1;
+    text[41] = 5;
+    text[42] = 5;
+    text[43] = 4;
+    text[44] = 0;*/
+
+    /*text[0] = 5;
+    text[1] = 5;
+    text[2] = 5;
+    text[3] = 5;
+    text[4] = 2;
+    text[5] = 3;
+    text[6] = 1;
+    text[7] = 4;
+    text[8] = 5;
+    text[9] = 5;
+    text[10] = 5;
+    text[11] = 5;
+    text[12] = 2;
+    text[13] = 3;
+    text[14] = 1;
+    text[15] = 4;
+    text[16] = 0;*/
+
+
     std::ofstream output(op_path);
 
-    std::size_t n = 51;
+    std::size_t n = 163;
     std::cerr << "Text length: " << n << ".\n";
     Goto_SA::Suffix_Array<uint64_t> suf_arr(text, n, 6, true);
     suf_arr.construct();

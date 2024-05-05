@@ -797,7 +797,7 @@ void Suffix_Array<T_idx_>::step_three(const idx_t* const T, idx_t* const SA, idx
     if(is_debug_) {
         std::cerr << "Starting Step 3: T and SA:\n";
         for(i = 0; i < n; ++i) {
-            std::cerr << T[i];
+            std::cerr << T[i] << " ";
         }
         std::cerr << ' ' << alpha_size << '\n';
         for(i = 0; i < n; ++i) {
@@ -1001,11 +1001,13 @@ void Suffix_Array<T_idx_>::step_three(const idx_t* const T, idx_t* const SA, idx
             // The cell in the main array might actually be really cursed and get replaced when we do the insertion if this cell actually belongs in the spare array.
             // Luckily, if it belongs in the spare array it must belong in the corresponding spot for this exact thing.
             // However, we might not notice that this guy is cursed for a while... But we won't move past the cursed thing.
-            if(insert_L_via_LE(SA[i], n - alpha_size - len_z3, T, SA, n, len_x1)) {
+            tmp = SA[i];
+            insert_L_via_LE(SA[i], n - alpha_size - len_z3, T, SA, n, len_x1);
+            if(tmp == SA[i]) {
+                ++i;
+            } else {
                 j++;
                 val2++;
-            } else {
-                ++i;
             }
         } else if(val2 == curr) {
             tmp = SA[j++];
@@ -1208,31 +1210,53 @@ void Suffix_Array<T_idx_>::step_three(const idx_t* const T, idx_t* const SA, idx
         curr = (val1 > val2) ? val1 : val2;
         curr = (curr > val3) ? curr : val3;
         curr = (curr > val4) ? curr : val4;
+        std::cerr << i << " " << j << " " << k << " " << l << "\n";
+        std::cerr << curr << " " << val1 << " " << val2 << " " << val3 << " " << val4 << "\n";
+        for(tmp = 0; tmp < n; ++tmp) {
+            std::cerr << SA[tmp] << " ";
+        }
+        std::cerr << '\n';
         if(val1 == curr) {
             // The cell in the main array might actually be really cursed and get replaced when we do the insertion if this cell actually belongs in the spare array.
             // Luckily, if it belongs in the spare array it must belong in the corresponding spot for this exact thing.
-            if(insert_R_via_RE(SA[i], len_x3 - 1, true, T, SA, n)) {
+            tmp = SA[i];
+            insert_R_via_RE(SA[i], len_x3 - 1, true, T, SA, n);
+            if(tmp == SA[i]) {
+                --i;
+            } else {
                 --j;
                 --val2;
-            } else {
-                --i;
             }
         } else if(val2 == curr) {
-            tmp = SA[j--] - n - 2;
-            insert_R_via_RE(tmp, len_x3 - 1, true, T, SA, n);
-            // Note that the is_S_when_equal parameter doesn't matter for the L things in the Y array
-            // because the L things here are the biggest ones, and adding the same digit in front would make it even bigger
-            // within the same interval.
-            val2--;
+            // Note that bad things can still happen here: SA[j] might still be blank, in which case what we actually need to do is swap SA[i + 1] into SA[j],
+            // increment i, and decrement j.
+            if(SA[j] < n + 2) {
+                SA[j--] = SA[++i] + n + 2;
+                SA[i] = n + 1;
+                val2--;
+            } else {
+                tmp = SA[j--] - n - 2;
+                if(insert_R_via_RE(tmp, len_x3 - 1, true, T, SA, n)) {
+                    ++i;
+                }
+                // Note that the is_S_when_equal parameter doesn't matter for the L things in the Y array
+                // because the L things here are the biggest ones, and adding the same digit in front would make it even bigger
+                // within the same interval.
+                val2--;
+            }
         } else if(val3 == curr) {
-            insert_R_via_RE(SA[k--], len_x3 - 1, false, T, SA, n);
+            if(insert_R_via_RE(SA[k--], len_x3 - 1, false, T, SA, n)) {
+                ++i;
+            }
             if(k < len_x1) {
                 val3 = 0;
             } else {
                 val3 = T[SA[k]];
             }
         } else {
-            insert_R_via_RE(SA[l--], len_x3 - 1, false, T, SA, n);
+            if(insert_R_via_RE(SA[l--], len_x3 - 1, false, T, SA, n)) {
+                ++i;
+            }
             // Note that l will hit zero and then cycle because we're using unsigned ints
             if(l > n) {
                 val4 = 0;
@@ -1318,7 +1342,7 @@ template <typename T_idx_>
 bool Suffix_Array<T_idx_>::insert_R_via_RE(idx_t target, idx_t RE_offset, bool is_S_when_equal, const idx_t* const T, idx_t* const SA, idx_t n)
 {
     if(target > 0 && (T[target - 1] < T[target] || (is_S_when_equal && T[target - 1] == T[target]))) {
-        idx_t tmp =  insert_via_RE(target - 1, RE_offset, T, SA, n);
+        idx_t tmp = insert_via_RE(target - 1, RE_offset, T, SA, n);
         return (tmp != n + 1 && T[tmp] >= T[target]);
     }
     return false;
