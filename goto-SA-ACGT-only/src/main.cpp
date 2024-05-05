@@ -48,10 +48,11 @@ int main(int argc, char* argv[])
     const std::string ip_path(argv[1]);
     const std::string op_path(argv[2]);
 
-    static uint64_t* text = static_cast<uint64_t*>(std::malloc(17 * sizeof(uint64_t)));
+    static uint64_t* text = static_cast<uint64_t*>(std::malloc(30 * sizeof(uint64_t)));
     // read_input(ip_path, text);
     // hard-coding test string
 
+    /*
     text[0] = 4;
     text[1] = 5;
     text[2] = 3;
@@ -81,7 +82,7 @@ int main(int argc, char* argv[])
     text[26] = 1;
     text[27] = 5;
     text[28] = 5;
-    text[29] = 0;
+    text[29] = 0;*/
 
     /*
     text[0] = 5;
@@ -170,12 +171,23 @@ int main(int argc, char* argv[])
     text[5] = 4;
     text[6] = 3;
     text[7] = 0;*/
+    text[0] = 1;
+    text[1] = 2;
+    text[2] = 3;
+    text[3] = 4;
+    text[4] = 5;
+    text[5] = 1;
+    text[6] = 2;
+    text[7] = 3;
+    text[8] = 4;
+    text[9] = 5;
+    text[10] = 0;
 
     std::ofstream output(op_path);
 
-    std::size_t n = 30;
+    std::size_t n = 11;
     std::cerr << "Text length: " << n << ".\n";
-    Goto_SA::Suffix_Array<uint64_t> suf_arr(text, n, 6);
+    Goto_SA::Suffix_Array<uint64_t> suf_arr(text, n, 6, true);
     suf_arr.construct();
     suf_arr.dump(output);
 

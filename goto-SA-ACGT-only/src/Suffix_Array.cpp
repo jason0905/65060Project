@@ -388,7 +388,8 @@ T_idx_ Suffix_Array<T_idx_>::step_one(const idx_t* const T, idx_t* const SA, idx
     // Note that SA[0], which we left in from before, is in fact an LMS suffix. Also we don't actually need to process that one
     // Bug: The spare array already contains an LML, but there are LMS things in that interval that are bigger, which needs to be added somehow.
     // Idea: When scanning LTR to find LMLs, whenever I see an LMS I can swap it into the spare slot if spare slot is full
-    // In particular, LMS needs to be flagged, say with 2n + 4 extra
+    // In particular, LMS needs to be flagged, say with 2n + 4 extra, so that we can do these swaps.
+    // Should be resolved.
     while(idx > n - alpha_size) {
         // Note that we still only need to check until idx hits minimum: anything earlier in the array than the smallest S/largest LML starting with 1
         // is going to be an L starting with 1 which can only be preceded by S if there's an S starting with 0. In fact, there will be no LML's starting with 1,
@@ -461,6 +462,7 @@ T_idx_ Suffix_Array<T_idx_>::step_one(const idx_t* const T, idx_t* const SA, idx
     }
 
 
+
     // Cleanup step: go through and verify that nobody stole space from earlier intervals. Corresponds to looping through the RE values and verifying emptiness.
     // No flags at this point I believe, so this is fine.
     for(i = n - alpha_size + 1, curr = 1; i < n; ++i, ++curr) {
@@ -469,7 +471,7 @@ T_idx_ Suffix_Array<T_idx_>::step_one(const idx_t* const T, idx_t* const SA, idx
             SA[idx] = SA[SA[i]] + n + 2;
             SA[SA[i]] = n + 1;
         }
-        if(SA[i] < n) {
+        if(SA[i] < n + 2) {
             SA[i] = n + 1;
         } else {
             SA[i] -= n + 2;
