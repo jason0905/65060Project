@@ -171,6 +171,7 @@ int main(int argc, char* argv[])
     text[5] = 4;
     text[6] = 3;
     text[7] = 0;*/
+    /*
     text[0] = 1;
     text[1] = 2;
     text[2] = 3;
@@ -182,10 +183,28 @@ int main(int argc, char* argv[])
     text[8] = 4;
     text[9] = 5;
     text[10] = 0;
+    */
+
+    /*
+    gtaattttttgatgacctgttcaatttcttcttttgtgatgggcctgttcaaatttttcacttcagtctgtgttagtttan
+    gtaattttttgatgacctgttcaatttcttcttttgtgatgggcctgttcaaatttttcacttcagtctgtgttagtttan*/
+    text[0] = 4;
+    text[1] = 3;
+    text[2] = 5;
+    text[3] = 1;
+    text[4] = 2;
+    text[5] = 5;
+    text[6] = 4;
+    text[7] = 3;
+    text[8] = 5;
+    text[9] = 1;
+    text[10] = 2;
+    text[11] = 5;
+    text[12] = 0;
 
     std::ofstream output(op_path);
 
-    std::size_t n = 11;
+    std::size_t n = 13;
     std::cerr << "Text length: " << n << ".\n";
     Goto_SA::Suffix_Array<uint64_t> suf_arr(text, n, 6, true);
     suf_arr.construct();

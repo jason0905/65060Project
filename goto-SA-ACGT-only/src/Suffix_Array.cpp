@@ -736,7 +736,7 @@ void Suffix_Array<T_idx_>::step_two_b(const idx_t* const T, idx_t* const SA, idx
     // First part: replacing the modified T
     bool is_small = true;
     T_new[LMS_count - 1] = n - 1;
-    for(i = n - 2; i > 0; --i) {
+    for(i = n - 2; i < n; --i) {
         if(T[i] < T[i + 1]) {
             is_small = true;
         } else if(T[i] > T[i + 1]) {
