@@ -1000,29 +1000,34 @@ void Suffix_Array<T_idx_>::step_three(const idx_t* const T, idx_t* const SA, idx
         if(val1 == curr) {
             // The cell in the main array might actually be really cursed and get replaced when we do the insertion if this cell actually belongs in the spare array.
             // Luckily, if it belongs in the spare array it must belong in the corresponding spot for this exact thing.
-            tmp = SA[i];
-            insert_L_via_LE(SA[i], n - alpha_size - len_z3, T, SA, n, len_x1);
-            if(tmp == SA[i]) {
-                ++i;
-            } else {
+            // However, we might not notice that this guy is cursed for a while... But we won't move past the cursed thing.
+            if(insert_L_via_LE(SA[i], n - alpha_size - len_z3, T, SA, n, len_x1)) {
                 j++;
                 val2++;
+            } else {
+                ++i;
             }
         } else if(val2 == curr) {
             tmp = SA[j++];
             if(tmp > n && tmp != 2 * n + 3) {
-                insert_L_via_LE(tmp - n - 2, n - alpha_size - len_z3, T, SA, n, len_x1);
+                if(insert_L_via_LE(tmp - n - 2, n - alpha_size - len_z3, T, SA, n, len_x1)) {
+                    --i;
+                }
             }
             val2++;
         } else if(val3 == curr) {
-            insert_L_via_LE(SA[k++], n - alpha_size - len_z3, T, SA, n, len_x1);
+            if(insert_L_via_LE(SA[k++], n - alpha_size - len_z3, T, SA, n, len_x1)) {
+                --i;
+            }
             if(k >= n - len_z2) {
                 val3 = n + 1;
             } else {
                 val3 = T[SA[k]];
             }
         } else {
-            insert_L_via_LE(SA[l++], n - alpha_size - len_z3, T, SA, n, len_x1);
+            if(insert_L_via_LE(SA[l++], n - alpha_size - len_z3, T, SA, n, len_x1)) {
+                --i;
+            }
             if(l >= n) {
                 val4 = n + 1;
             } else {
@@ -1206,13 +1211,11 @@ void Suffix_Array<T_idx_>::step_three(const idx_t* const T, idx_t* const SA, idx
         if(val1 == curr) {
             // The cell in the main array might actually be really cursed and get replaced when we do the insertion if this cell actually belongs in the spare array.
             // Luckily, if it belongs in the spare array it must belong in the corresponding spot for this exact thing.
-            tmp = SA[i];
-            insert_R_via_RE(SA[i], len_x3 - 1, true, T, SA, n);
-            if(tmp == SA[i]) {
-                --i;
-            } else {
+            if(insert_R_via_RE(SA[i], len_x3 - 1, true, T, SA, n)) {
                 --j;
                 --val2;
+            } else {
+                --i;
             }
         } else if(val2 == curr) {
             tmp = SA[j--] - n - 2;
@@ -1301,26 +1304,30 @@ void Suffix_Array<T_idx_>::step_three(const idx_t* const T, idx_t* const SA, idx
 
 
 template <typename T_idx_>
-void Suffix_Array<T_idx_>::insert_L_via_LE(idx_t target, idx_t LE_offset, const idx_t* const T, idx_t* const SA, idx_t n, idx_t arr_bound)
+bool Suffix_Array<T_idx_>::insert_L_via_LE(idx_t target, idx_t LE_offset, const idx_t* const T, idx_t* const SA, idx_t n, idx_t arr_bound)
 {
     if(target > 0 && T[target - 1] >= T[target]) {
-        insert_via_LE(target - 1, LE_offset, T, SA, n, arr_bound);
+        idx_t tmp = insert_via_LE(target - 1, LE_offset, T, SA, n, arr_bound);
+        return (tmp != n + 1 && T[tmp] <= T[target]);
     }
+    return false;
 }
 
 
 template <typename T_idx_>
-void Suffix_Array<T_idx_>::insert_R_via_RE(idx_t target, idx_t RE_offset, bool is_S_when_equal, const idx_t* const T, idx_t* const SA, idx_t n)
+bool Suffix_Array<T_idx_>::insert_R_via_RE(idx_t target, idx_t RE_offset, bool is_S_when_equal, const idx_t* const T, idx_t* const SA, idx_t n)
 {
     if(target > 0 && (T[target - 1] < T[target] || (is_S_when_equal && T[target - 1] == T[target]))) {
-        insert_via_RE(target - 1, RE_offset, T, SA, n);
+        idx_t tmp =  insert_via_RE(target - 1, RE_offset, T, SA, n);
+        return (tmp != n + 1 && T[tmp] >= T[target]);
     }
+    return false;
 }
 
 
 // Need to check if you exited array on right.
 template <typename T_idx_>
-void Suffix_Array<T_idx_>::insert_via_LE(idx_t target, idx_t LE_offset, const idx_t* const T, idx_t* const SA, idx_t n, idx_t arr_bound)
+T_idx_ Suffix_Array<T_idx_>::insert_via_LE(idx_t target, idx_t LE_offset, const idx_t* const T, idx_t* const SA, idx_t n, idx_t arr_bound)
 {
     idx_t idx = T[target] + LE_offset;
     if(SA[SA[idx]] == n + 1 && SA[idx] < arr_bound) {
@@ -1336,18 +1343,20 @@ void Suffix_Array<T_idx_>::insert_via_LE(idx_t target, idx_t LE_offset, const id
         SA[idx2] = SA[SA[idx]] + n + 2;
         SA[SA[idx]] = target;
         SA[idx]++;
+        return SA[idx2] - n - 2;
     }
     else {
         // attempting to overwrite something that is in a later interval,
         // so this item actually replaces the approximate value of LE near the end of SA
         SA[idx] = target + n + 2;
     }
+    return n + 1;
 }
 
 
 // Doesn't need to check if you've exited the array on the left because the 0 item is there to block
 template <typename T_idx_>
-void Suffix_Array<T_idx_>::insert_via_RE(idx_t i, idx_t RE_offset, const idx_t* const T, idx_t* const SA, idx_t n)
+T_idx_ Suffix_Array<T_idx_>::insert_via_RE(idx_t i, idx_t RE_offset, const idx_t* const T, idx_t* const SA, idx_t n)
 {
     idx_t idx = T[i] + RE_offset;
     if(SA[SA[idx]] == n + 1) {
@@ -1363,12 +1372,14 @@ void Suffix_Array<T_idx_>::insert_via_RE(idx_t i, idx_t RE_offset, const idx_t* 
         SA[idx2] = SA[SA[idx]] + n + 2;
         SA[SA[idx]] = i;
         SA[idx]--;
+        return SA[idx2] - n - 2;
     }
     else {
         // attempting to overwrite something that is in an earlier interval,
         // so this item actually replaces the approximate value of RE near the end of SA
         SA[idx] = i + n + 2;
     }
+    return n + 1;
 }
 
 

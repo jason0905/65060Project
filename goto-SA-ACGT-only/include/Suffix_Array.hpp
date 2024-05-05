@@ -49,7 +49,7 @@ private:
     T_idx_ step_onec1_process_cell(idx_t target, const idx_t* const T, idx_t* const SA, idx_t n, idx_t alpha_size);
 
     // Pre-recursive portion of second step of Goto's three step process; returns alphabet size for recursive case or zero if no recursion is needed.
-   T_idx_ step_two_a(const idx_t* const T, idx_t* const SA, idx_t n, idx_t LMS_count);
+    T_idx_ step_two_a(const idx_t* const T, idx_t* const SA, idx_t n, idx_t LMS_count);
     
     // Post-recursive portion of second step of Goto's three step process.
     void step_two_b(const idx_t* const T, idx_t* const SA, idx_t n, idx_t LMS_count);
@@ -57,17 +57,17 @@ private:
     // Step three of Goto's three step process
     void step_three(const idx_t* const T, idx_t* const SA, idx_t n, idx_t alpha_size);
 
-    // Inserting the preceding L suffix (if any) via the LE array
-    void insert_L_via_LE(idx_t target, idx_t LE_offset, const idx_t* const T, idx_t* const SA, idx_t n, idx_t arr_bound);
+    // Inserting the preceding L suffix (if any) via the LE array, returns true if kicked something out of main array that matters for moving i
+    bool insert_L_via_LE(idx_t target, idx_t LE_offset, const idx_t* const T, idx_t* const SA, idx_t n, idx_t arr_bound);
 
-    // Inserting the preceding R suffix (if any) via the RE array
-    void insert_R_via_RE(idx_t target, idx_t RE_offset, bool is_S_when_equal, const idx_t* const T, idx_t* const SA, idx_t n);
+    // Inserting the preceding R suffix (if any) via the RE array, returns true if kicked something out of main array that matters for moving i
+    bool insert_R_via_RE(idx_t target, idx_t RE_offset, bool is_S_when_equal, const idx_t* const T, idx_t* const SA, idx_t n);
 
-    // Inserting using the LE array for Goto's algorithm
-    void insert_via_LE(idx_t target, idx_t LE_offset, const idx_t* const T, idx_t* const SA, idx_t n, idx_t arr_bound);
+    // Inserting using the LE array for Goto's algorithm, returns the item kicked out if kicked something out of main array
+    T_idx_ insert_via_LE(idx_t target, idx_t LE_offset, const idx_t* const T, idx_t* const SA, idx_t n, idx_t arr_bound);
 
-    // Inserting using the RE array for Goto's algorithm
-    void insert_via_RE(idx_t target, idx_t RE_offset, const idx_t* const T, idx_t* const SA, idx_t n);
+    // Inserting using the RE array for Goto's algorithm, returns the item kicked out if kicked something out of main array
+    T_idx_ insert_via_RE(idx_t target, idx_t RE_offset, const idx_t* const T, idx_t* const SA, idx_t n);
 
 public:
 
