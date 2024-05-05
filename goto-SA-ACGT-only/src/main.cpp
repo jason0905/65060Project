@@ -582,7 +582,7 @@ int main(int argc, char* argv[])
 
     std::size_t n = 163;
     std::cerr << "Text length: " << n << ".\n";
-    Goto_SA::Suffix_Array<uint64_t> suf_arr(text, n, 6, true);
+    Goto_SA::Suffix_Array<uint64_t> suf_arr(text, n, 6);
     suf_arr.construct();
     suf_arr.dump(output);
 

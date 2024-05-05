@@ -1210,12 +1210,6 @@ void Suffix_Array<T_idx_>::step_three(const idx_t* const T, idx_t* const SA, idx
         curr = (val1 > val2) ? val1 : val2;
         curr = (curr > val3) ? curr : val3;
         curr = (curr > val4) ? curr : val4;
-        std::cerr << i << " " << j << " " << k << " " << l << "\n";
-        std::cerr << curr << " " << val1 << " " << val2 << " " << val3 << " " << val4 << "\n";
-        for(tmp = 0; tmp < n; ++tmp) {
-            std::cerr << SA[tmp] << " ";
-        }
-        std::cerr << '\n';
         if(val1 == curr) {
             // The cell in the main array might actually be really cursed and get replaced when we do the insertion if this cell actually belongs in the spare array.
             // Luckily, if it belongs in the spare array it must belong in the corresponding spot for this exact thing.
