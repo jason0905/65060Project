@@ -291,7 +291,7 @@ T_idx_ Suffix_Array<T_idx_>::step_one(const idx_t* const T, idx_t* const SA, idx
                 tmp -= n + 2;
             }
             if(T[tmp] < curr) {
-                idx = T[SA[SA[i]]] + n - alpha_size;
+                idx = T[tmp] + n - alpha_size;
                 SA[idx] = SA[SA[i]] + n + 2;
                 SA[SA[i]] = n + 1;
             }
