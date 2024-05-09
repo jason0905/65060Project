@@ -424,12 +424,15 @@ T_idx_ Suffix_Array<T_idx_>::step_one(const idx_t* const T, idx_t* const SA, idx
                         // Spare cell has element of array, don't need to check for zero because we don't insert zeroes in step c.
                         if(step_onec1_process_cell(idx, T, SA, n, alpha_size, true)) {
                             ++i;
+                            --curr;
+                            --idx;
+                            break;
                         }
                     }
                     --curr;
                     --idx;
                 }
-                --j;
+                j = idx - 1;
             } else {
                 // We can process this cell, which is empty, so just skip
                 --i;
@@ -466,7 +469,7 @@ T_idx_ Suffix_Array<T_idx_>::step_one(const idx_t* const T, idx_t* const SA, idx
                 // In particular, the item in spares might need changing by k.
                 tmp = SA[i];
                 step_onec1_process_cell(i, T, SA, n, alpha_size, false);
-                if(SA[i] == tmp || SA[i] == n + 1) {
+                if(SA[i] == tmp || SA[i] == n + 2 + tmp) {
                     --i;
                 } else {
                     --idx;
@@ -484,10 +487,16 @@ T_idx_ Suffix_Array<T_idx_>::step_one(const idx_t* const T, idx_t* const SA, idx
             SA[idx] = SA[SA[i]] + n + 2;
             SA[SA[i]] = n + 1;
         }
-        if(SA[i] < n + 2) {
+        if(SA[i] < n + 2 || SA[i] > 2 * n + 3) {
             SA[i] = n + 1;
         } else {
             SA[i] -= n + 2;
+        }
+    }
+
+    for(i = 1; i <= n - alpha_size; ++i) {
+        if(SA[i] > n + 1) {
+            SA[i] = n + 1;
         }
     }
 
@@ -583,6 +592,9 @@ bool Suffix_Array<T_idx_>::step_oneb1_process_cell(idx_t target_idx, const idx_t
 template <typename T_idx_>
 bool Suffix_Array<T_idx_>::step_onec1_process_cell(idx_t target_idx, const idx_t* const T, idx_t* const SA, idx_t n, idx_t alpha_size, bool add_flag)
 {
+    // Bug: Because we keep erasing things, we might not realize that we've booted something out of main array because the thing that we booted out
+    // has already been erased.
+    // Solution: Instead of erasing things, just flag them a bunch more times.
     idx_t target = SA[target_idx];
     while(target > n) {
         target -= n + 2;
@@ -595,15 +607,15 @@ bool Suffix_Array<T_idx_>::step_onec1_process_cell(idx_t target_idx, const idx_t
                 tmp -= n + 2;
             }
             if(tmp != target) {
-                // If thing that you booted out is not literally the same thing that you're in right now then you can empty current location
-                SA[target_idx] = n + 1 + (add_flag ? n + 2 : 0);
+                // If thing that you booted out is not literally the same thing that you're in right now then just flag current location for emptying
+                SA[target_idx] = target + n + 2 + (add_flag ? n + 2 : 0);
             } else {
-                // If thing you booted out is yourself then you need to find the appropriate location to empty
-                SA[T[target] + n - alpha_size] = 2 * n + 3;
+                // If thing you booted out is yourself then you need to find the appropriate location to flag.
+                SA[T[target] + n - alpha_size] = target + 2 * n + 4;
             }
             return (tmp != n + 1 && T[tmp] >= T[target]);
         }
-        SA[target_idx] = n + 1 + (add_flag ? n + 2 : 0);
+        SA[target_idx] = target + n + 2 + (add_flag ? n + 2 : 0);
         return false;
     }
     // Turns out we were LMS
