@@ -482,10 +482,16 @@ T_idx_ Suffix_Array<T_idx_>::step_one(const idx_t* const T, idx_t* const SA, idx
     // Cleanup step: go through and verify that nobody stole space from earlier intervals. Corresponds to looping through the RE values and verifying emptiness.
     // No flags at this point I believe, so this is fine.
     for(i = n - alpha_size + 1, curr = 1; i < n; ++i, ++curr) {
-        if(SA[i] < n - alpha_size + 1 && SA[SA[i]] != n + 1 && T[SA[SA[i]]] > curr) {
-            idx = T[SA[SA[i]]] + n - alpha_size;
-            SA[idx] = SA[SA[i]] + n + 2;
-            SA[SA[i]] = n + 1;
+        if(SA[i] < n - alpha_size + 1) {
+            tmp = SA[SA[i]];
+            while(tmp > n + 1) {
+                tmp -= n + 2;
+            }
+            if(tmp != n + 1 && T[tmp] > curr) {
+                idx = T[tmp] + n - alpha_size;
+                SA[idx] = SA[SA[i]] + n + 2;
+                SA[SA[i]] = n + 1;
+            }
         }
         if(SA[i] < n + 2 || SA[i] > 2 * n + 3) {
             SA[i] = n + 1;
