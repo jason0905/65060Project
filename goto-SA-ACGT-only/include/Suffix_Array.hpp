@@ -42,11 +42,11 @@ private:
     // Step one of Goto's three step process. Returns the number of LMS substrings.
     T_idx_ step_one(const idx_t* const T, idx_t* const SA, idx_t n, idx_t alpha_size);
 
-    // Processing a cell for step 1b part 1 of Goto's algorithm, returns the necessary offset for marking whether or not the cell is LML.
-    T_idx_ step_oneb1_process_cell(idx_t target, const idx_t* const T, idx_t* const SA, idx_t n, idx_t alpha_size, idx_t arr_bound);
+    // Processing a cell for step 1b part 1 of Goto's algorithm, returns true if we kicked out something potentially important in the main array
+    bool step_oneb1_process_cell(idx_t target_idx, const idx_t* const T, idx_t* const SA, idx_t n, idx_t alpha_size, idx_t arr_bound);
 
-    // Processing a cell for step 1c part 1 of Goto's algorithm, returns the value to store in the cell based on whether or not it is LMS.
-    T_idx_ step_onec1_process_cell(idx_t target, const idx_t* const T, idx_t* const SA, idx_t n, idx_t alpha_size);
+    // Processing a cell for step 1c part 1 of Goto's algorithm, returns true if we kicked out something potentially important in the main array
+    bool step_onec1_process_cell(idx_t target_idx, const idx_t* const T, idx_t* const SA, idx_t n, idx_t alpha_size, bool add_flag);
 
     // Pre-recursive portion of second step of Goto's three step process; returns alphabet size for recursive case or zero if no recursion is needed.
     T_idx_ step_two_a(const idx_t* const T, idx_t* const SA, idx_t n, idx_t LMS_count);

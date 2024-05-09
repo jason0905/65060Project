@@ -204,8 +204,10 @@ T_idx_ Suffix_Array<T_idx_>::step_one(const idx_t* const T, idx_t* const SA, idx
     for(; j < n && SA[j] > n; ++j) {}
 
     // process the boring first element, which is LMS and therefore not LML
-    // TODO: Verify that flagged values never kill everything when I check SA[i] values
-    step_oneb1_process_cell(SA[0], T, SA, n, alpha_size, n - alpha_size + 1);
+    // TODO: Figure out the bug that if a main slot is replaced after already being processed then bad things happen.
+    // However, this is impossible if the next one has been processed already so this is just a bunch of careful checks about where the replaced
+    // thing is.
+    step_oneb1_process_cell(0, T, SA, n, alpha_size, n - alpha_size + 1);
     while(idx < n) {
         k = SA[i];
         while(k > n + 1) {
@@ -216,7 +218,9 @@ T_idx_ Suffix_Array<T_idx_>::step_one(const idx_t* const T, idx_t* const SA, idx
             // main slots finished, just finish off the spare cells
             if(SA[idx] > n + 2) {
                 // Spare cell has nonzero element of array
-                SA[idx] += step_oneb1_process_cell(SA[idx], T, SA, n, alpha_size, n - alpha_size + 1);
+                if(step_oneb1_process_cell(idx, T, SA, n, alpha_size, n - alpha_size + 1)) {
+                    --i;
+                }
             }
             ++curr;
             ++idx;
@@ -227,12 +231,17 @@ T_idx_ Suffix_Array<T_idx_>::step_one(const idx_t* const T, idx_t* const SA, idx
                 while(idx < j) {
                     if(SA[idx] > n + 2) {
                         // Spare cell has nonzero element of array
-                        SA[idx] += step_oneb1_process_cell(SA[idx], T, SA, n, alpha_size, n - alpha_size + 1);
+                        if(step_oneb1_process_cell(idx, T, SA, n, alpha_size, n - alpha_size + 1)) {
+                            --i;
+                            ++curr;
+                            ++idx;
+                            break;
+                        }
                     }
                     ++curr;
                     ++idx;
                 }
-                ++j;
+                j = idx + 1;
             } else {
                 // We can process this cell, which is empty, so just skip
                 ++i;
@@ -241,7 +250,9 @@ T_idx_ Suffix_Array<T_idx_>::step_one(const idx_t* const T, idx_t* const SA, idx
             // Use spare cell
             if(SA[idx] > n + 2) {
                 // Spare cell has nonzero element of array
-                SA[idx] += step_oneb1_process_cell(SA[idx], T, SA, n, alpha_size, n - alpha_size + 1);
+                if(step_oneb1_process_cell(idx, T, SA, n, alpha_size, n - alpha_size + 1)) {
+                    --i;
+                }
             }
             ++curr;
             ++idx;
@@ -254,22 +265,19 @@ T_idx_ Suffix_Array<T_idx_>::step_one(const idx_t* const T, idx_t* const SA, idx
             } else if(SA[i] > 0) {
                 // Use main cell
                 tmp = SA[i];
-                k = step_oneb1_process_cell(SA[i], T, SA, n, alpha_size, n - alpha_size + 1);
-                if(SA[i] == tmp) {
-                    SA[i] += k;
-                } else {
+                step_oneb1_process_cell(i, T, SA, n, alpha_size, n - alpha_size + 1);
+                if(SA[i] != tmp && SA[i] != tmp + n + 2) {
                     // Possible to have really annoying situations where your current cell actually belongs in spares array
                     // In this case we actually increment curr and idx and not i, since we may need to reprocess current cell.
                     // In particular, the item in spares might need changing by k.
-                    SA[idx++] += k;
                     ++curr;
+                    ++idx;
                     --i;
                 }
             }
             ++i;
         }
     }
-
     // First Cleanup step: anything excessively large gets decreased by 2n + 4
     for(i = 0; i < n - alpha_size + 1; ++i) {
         if(SA[i] > 2 * n + 3) {
@@ -281,6 +289,7 @@ T_idx_ Suffix_Array<T_idx_>::step_one(const idx_t* const T, idx_t* const SA, idx
             SA[i] -= 2 * n + 4;
         }
     }
+
 
     // Cleanup step: go through and verify that nobody stole space from later intervals. Corresponds to looping through the LE values and verifying emptiness.
     // Note that flags can mess with cleanup
@@ -305,6 +314,7 @@ T_idx_ Suffix_Array<T_idx_>::step_one(const idx_t* const T, idx_t* const SA, idx
         }
         std::cerr << '\n';
     }
+
 
     // Step c0: Change the LE values back into RE values. Note that unmarked things will need to be dropped, so any LE values currently used as spare cells
     // will need to be carefully considered. If they store a LML (technically any L) then we don't have to find the corresponding RE value, but otherwise
@@ -385,6 +395,7 @@ T_idx_ Suffix_Array<T_idx_>::step_one(const idx_t* const T, idx_t* const SA, idx
     j = n - 1;
     for(; j > n - alpha_size && SA[j] > n; --j) {}
 
+
     // Note that SA[0], which we left in from before, is in fact an LMS suffix. Also we don't actually need to process that one
     // Bug: The spare array already contains an LML, but there are LMS things in that interval that are bigger, which needs to be added somehow.
     // Idea: When scanning LTR to find LMLs, whenever I see an LMS I can swap it into the spare slot if spare slot is full
@@ -398,7 +409,9 @@ T_idx_ Suffix_Array<T_idx_>::step_one(const idx_t* const T, idx_t* const SA, idx
             // main slots finished, just finish off the spare cells
             if(SA[idx] > n + 2) {
                 // Spare cell has nonzero element of array
-                SA[idx] = n + 2 + step_onec1_process_cell(SA[idx] - n - 2, T, SA, n, alpha_size);
+                if(step_onec1_process_cell(idx, T, SA, n, alpha_size, true)) {
+                    ++i;
+                }
             }
             --curr;
             --idx;
@@ -409,7 +422,9 @@ T_idx_ Suffix_Array<T_idx_>::step_one(const idx_t* const T, idx_t* const SA, idx
                 while(idx > j) {
                     if(SA[idx] > n) {
                         // Spare cell has element of array, don't need to check for zero because we don't insert zeroes in step c.
-                        SA[idx] = n + 2 + step_onec1_process_cell(SA[idx] - n - 2, T, SA, n, alpha_size);
+                        if(step_onec1_process_cell(idx, T, SA, n, alpha_size, true)) {
+                            ++i;
+                        }
                     }
                     --curr;
                     --idx;
@@ -428,40 +443,38 @@ T_idx_ Suffix_Array<T_idx_>::step_one(const idx_t* const T, idx_t* const SA, idx
                 // Use spare cell
                 if(SA[idx] > n) {
                     // Spare cell has element of array, don't need to check for zero because we don't insert zeroes in step c.
-                    SA[idx] = n + 2 + step_onec1_process_cell(SA[idx] - n - 2, T, SA, n, alpha_size);
+                    if(step_onec1_process_cell(idx, T, SA, n, alpha_size, true)) {
+                        ++i;
+                    }
                 }
                 --curr;
                 --idx;
-            } else if(T[tmp] > curr) {
-                // Use main cell
-                SA[i] = step_onec1_process_cell(tmp, T, SA, n, alpha_size);
-                --i;
-            } else if(SA[i] > n) {
-                // SA contains an L item, so we use spare cell if nonempty
+            } else if(SA[i] > n && (T[tmp] <= curr)) {
+                // SA contains an L item, so we use spare cell if nonempty and appropriate
                 if(SA[idx] > n) {
                     // Spare cell has element of array, don't need to check for zero because we don't insert zeroes in step c.
-                    SA[idx] = n + 2 + step_onec1_process_cell(SA[idx] - n - 2, T, SA, n, alpha_size);
+                    if(step_onec1_process_cell(idx, T, SA, n, alpha_size, true)) {
+                        ++i;
+                    }
                 }
                 --curr;
                 --idx;
             } else {
+                // Use main cell
                 // Possible to have really annoying situations where your current cell actually belongs in spares array
                 // In this case we actually decrement curr and idx and not i, since we may need to reprocess current cell.
                 // In particular, the item in spares might need changing by k.
                 tmp = SA[i];
-                k = step_onec1_process_cell(tmp, T, SA, n, alpha_size);
-                if(SA[i] == tmp) {
-                    SA[i] = k;
+                step_onec1_process_cell(i, T, SA, n, alpha_size, false);
+                if(SA[i] == tmp || SA[i] == n + 1) {
                     --i;
                 } else {
-                    SA[idx--] = k;
+                    --idx;
                     --curr;
                 }
             }
         }
     }
-
-
 
     // Cleanup step: go through and verify that nobody stole space from earlier intervals. Corresponds to looping through the RE values and verifying emptiness.
     // No flags at this point I believe, so this is fine.
@@ -547,36 +560,55 @@ T_idx_ Suffix_Array<T_idx_>::step_one(const idx_t* const T, idx_t* const SA, idx
 
 // Returns the flag thing for in case the cell is LML
 template <typename T_idx_>
-T_idx_ Suffix_Array<T_idx_>::step_oneb1_process_cell(idx_t target, const idx_t* const T, idx_t* const SA, idx_t n, idx_t alpha_size, idx_t arr_bound)
+bool Suffix_Array<T_idx_>::step_oneb1_process_cell(idx_t target_idx, const idx_t* const T, idx_t* const SA, idx_t n, idx_t alpha_size, idx_t arr_bound)
 {
+    idx_t target = SA[target_idx];
     while(target > n) {
         target -= n + 2;
     }
     if(T[target - 1] >= T[target]) {
-        insert_via_LE(target - 1, n - alpha_size, T, SA, n, arr_bound);
-        return 0;
+        idx_t tmp = insert_via_LE(target - 1, n - alpha_size, T, SA, n, arr_bound);
+        while(tmp > n + 1) {
+            tmp -= n + 2;
+        }
+        return (tmp != n + 1 && T[tmp] <= T[target]);
     }
     // Turns out we were LML
-    return n + 2;
+    SA[target_idx] += n + 2;
+    return false;
 }
 
 
 // Returns empty if thing is not LMS and value if it is.
 template <typename T_idx_>
-T_idx_ Suffix_Array<T_idx_>::step_onec1_process_cell(idx_t target, const idx_t* const T, idx_t* const SA, idx_t n, idx_t alpha_size)
+bool Suffix_Array<T_idx_>::step_onec1_process_cell(idx_t target_idx, const idx_t* const T, idx_t* const SA, idx_t n, idx_t alpha_size, bool add_flag)
 {
-    if(target > n) {
+    idx_t target = SA[target_idx];
+    while(target > n) {
         target -= n + 2;
     }
     if(T[target - 1] <= T[target]) {
         if(target > 1) {
             // Just to make sure we don't insert 0
-            insert_via_RE(target - 1, n - alpha_size, T, SA, n);
+            idx_t tmp = insert_via_RE(target - 1, n - alpha_size, T, SA, n);
+            while(tmp > n + 1) {
+                tmp -= n + 2;
+            }
+            if(tmp != target) {
+                // If thing that you booted out is not literally the same thing that you're in right now then you can empty current location
+                SA[target_idx] = n + 1 + (add_flag ? n + 2 : 0);
+            } else {
+                // If thing you booted out is yourself then you need to find the appropriate location to empty
+                SA[T[target] + n - alpha_size] = 2 * n + 3;
+            }
+            return (tmp != n + 1 && T[tmp] >= T[target]);
         }
-        return n + 1;
+        SA[target_idx] = n + 1 + (add_flag ? n + 2 : 0);
+        return false;
     }
     // Turns out we were LMS
-    return target;
+    SA[target_idx] = target + (add_flag ? n + 2 : 0);
+    return false;
 }
 
 
@@ -1348,16 +1380,20 @@ template <typename T_idx_>
 T_idx_ Suffix_Array<T_idx_>::insert_via_LE(idx_t target, idx_t LE_offset, const idx_t* const T, idx_t* const SA, idx_t n, idx_t arr_bound)
 {
     idx_t idx = T[target] + LE_offset;
+    idx_t tmp = SA[SA[idx]];
+    while(tmp > n + 1) {
+        tmp -= n + 2;
+    }
     if(SA[SA[idx]] == n + 1 && SA[idx] < arr_bound) {
         // Space is free
         SA[SA[idx]] = target;
         SA[idx]++;
     }
-    else if (SA[SA[idx]] < n && T[SA[SA[idx]]] < T[target] && SA[idx] < arr_bound) {
+    else if (tmp < n && T[tmp] < T[target] && SA[idx] < arr_bound) {
         // overwritten by something that should have been in an earlier interval,
         // so move that item to the appropriate location near the end of SA
         // then place this item in
-        idx_t idx2 = T[SA[SA[idx]]] + LE_offset;
+        idx_t idx2 = T[tmp] + LE_offset;
         SA[idx2] = SA[SA[idx]] + n + 2;
         SA[SA[idx]] = target;
         SA[idx]++;
@@ -1377,16 +1413,20 @@ template <typename T_idx_>
 T_idx_ Suffix_Array<T_idx_>::insert_via_RE(idx_t i, idx_t RE_offset, const idx_t* const T, idx_t* const SA, idx_t n)
 {
     idx_t idx = T[i] + RE_offset;
+    idx_t tmp = SA[SA[idx]];
+    while(tmp > n + 1) {
+        tmp -= n + 2;
+    }
     if(SA[SA[idx]] == n + 1) {
         // Space is free
         SA[SA[idx]] = i;
         SA[idx]--;
     }
-    else if (SA[SA[idx]] < n && T[SA[SA[idx]]] > T[i]) {
+    else if (tmp < n && T[tmp] > T[i]) {
         // overwritten by something that should have been in a later interval,
         // so move that item to the appropriate location near the end of SA
         // then place this item in
-        idx_t idx2 = T[SA[SA[idx]]] + RE_offset;
+        idx_t idx2 = T[tmp] + RE_offset;
         SA[idx2] = SA[SA[idx]] + n + 2;
         SA[SA[idx]] = i;
         SA[idx]--;
