@@ -9,8 +9,55 @@
 #include <algorithm>
 #include <cassert>
 
+#ifdef MERGEIP
+#include "merge.h"
+#endif
+
 namespace Goto_SA
 {
+#ifdef MERGEIP
+/* What's this mess for?
+ * The in-place merge assumes that it is sorting the provided values (here, indices)
+ * But, we actually need to compare/sort the indices based on the values the reference
+ * So, we create a fake struct with comparison operators that do that, and then
+ * we cast the indices to this struct before invoking the in-place merge.
+ * Since C stores structs with just their values, and the only value is the same
+ * size as index, we can do this with 0 cost. 
+ * This way, no modification of the general in-place merge code is required.
+ * Unfortunately, to avoid needing a copy of the pointer to the T (text) array
+ * in every element, that variable has to be global or static. This is not the
+ * nicest thing and costs 8 bytes, but it is what it is. It seems the least bad option.
+ * as I don't know a way to locally define a struct that references a local variable
+ * in function definitions
+ */
+template <typename idx_t>
+struct value_wrap {
+    idx_t index;
+    static const idx_t* values;
+
+    bool operator<(const value_wrap &other) const {
+        return values[index] < values[other.index];
+    }
+    bool operator<=(const value_wrap &other) const {
+        return values[index] <= values[other.index];
+    }
+    bool operator>(const value_wrap &other) const {
+        return values[index] > values[other.index];
+    }
+    bool operator>=(const value_wrap &other) const {
+        return values[index] >= values[other.index];
+    }
+    bool operator==(const value_wrap &other) const {
+        return values[index] == values[other.index];
+    } 
+    bool operator!=(const value_wrap &other) const {
+        return values[index] != values[other.index];
+    }
+};
+template <typename idx_t>
+const idx_t *value_wrap<idx_t>::values = nullptr;
+#endif
+
 
 template <typename T_idx_>
 Suffix_Array<T_idx_>::Suffix_Array(const idx_t* const T, const idx_t n, const idx_t alpha_size, const bool is_debug):
@@ -1328,6 +1375,42 @@ void Suffix_Array<T_idx_>::step_three(const idx_t* const T, idx_t* const SA, idx
     // Remaining steps: Merge the suffix arrays two at a time.
     // Note that the suffix arrays on the left always has smaller values than the suffix arrays on the right.
     // We do this by just calling the merge function a few times.
+
+    #ifdef MERGEIP
+    //Stick the current T into the static field of the struct
+    //Very gross, I know
+    //But I don't know of a way to locally define a struct using a local variable
+    value_wrap<idx_t>::values = T;
+    //Casting the indices to the struct that overrides comparisons
+    value_wrap<idx_t> *SA_cast = (value_wrap<idx_t>*) SA;
+    //std::cout << "\n\n\nMerging\n";
+    //for (size_t i = 0; i < n; i++) {
+    //    std::cout << SA[i] << ' ';
+    //}
+    //std::cout << std::endl;
+    //for (size_t i = 0; i < n; i++) {
+    //    std::cout << T[i] << ' ';
+    //}
+    //std::cout << std::endl;
+    //std::cout << len_x1 << " " << len_x3 << " " << len_x3+alpha_size-1 << " " << n << std::endl;
+    merge_inplace(SA_cast, len_x1, len_x3);
+    //for (size_t i = 0; i < n; i++) {
+    //    std::cout << SA[i] << ' ';
+    //}
+    //std::cout << std::endl;
+    merge_inplace(SA_cast+len_x3, alpha_size-1, n-len_x3);
+    //for (size_t i = 0; i < n; i++) {
+    //    std::cout << SA[i] << ' ';
+    //}
+    //std::cout << std::endl;
+    merge_inplace(SA_cast, len_x3, n);
+    //for (size_t i = 0; i < n; i++) {
+    //    std::cout << SA[i] << ' ';
+    //}
+    //std::cout << std::endl;
+
+    
+    #else
     i = 0;
     val1 = len_x1 > 0 ? T[SA[0]] : n + 1;
     j = len_x1;
@@ -1357,9 +1440,14 @@ void Suffix_Array<T_idx_>::step_three(const idx_t* const T, idx_t* const SA, idx
             val4 = n > l ? T[SA[l]] : n + 1;
         }
     }
+    //for (size_t i = 0; i < n; i++) {
+    //    std::cout << L[i] << ' ';
+    //}
+    //std::cout << std::endl;
     for(idx = 0; idx < n; ++idx) {
         SA[idx] = L[idx];
     }
+    #endif
 
     if(is_debug_) {
         std::cerr << "Step 3 output\n";
@@ -1465,7 +1553,7 @@ template <typename T_idx_>
 void Suffix_Array<T_idx_>::construct()
 {
     const auto t_start = now();
-
+    
     // Emptying the array
     idx_t i;
     for(i = 0; i < n_; ++i) {
