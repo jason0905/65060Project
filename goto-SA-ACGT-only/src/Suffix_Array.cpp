@@ -1383,32 +1383,9 @@ void Suffix_Array<T_idx_>::step_three(const idx_t* const T, idx_t* const SA, idx
     value_wrap<idx_t>::values = T;
     //Casting the indices to the struct that overrides comparisons
     value_wrap<idx_t> *SA_cast = (value_wrap<idx_t>*) SA;
-    //std::cout << "\n\n\nMerging\n";
-    //for (size_t i = 0; i < n; i++) {
-    //    std::cout << SA[i] << ' ';
-    //}
-    //std::cout << std::endl;
-    //for (size_t i = 0; i < n; i++) {
-    //    std::cout << T[i] << ' ';
-    //}
-    //std::cout << std::endl;
-    //std::cout << len_x1 << " " << len_x3 << " " << len_x3+alpha_size-1 << " " << n << std::endl;
     merge_inplace(SA_cast, len_x1, len_x3);
-    //for (size_t i = 0; i < n; i++) {
-    //    std::cout << SA[i] << ' ';
-    //}
-    //std::cout << std::endl;
     merge_inplace(SA_cast+len_x3, alpha_size-1, n-len_x3);
-    //for (size_t i = 0; i < n; i++) {
-    //    std::cout << SA[i] << ' ';
-    //}
-    //std::cout << std::endl;
     merge_inplace(SA_cast, len_x3, n);
-    //for (size_t i = 0; i < n; i++) {
-    //    std::cout << SA[i] << ' ';
-    //}
-    //std::cout << std::endl;
-
     
     #else
     i = 0;
@@ -1440,10 +1417,6 @@ void Suffix_Array<T_idx_>::step_three(const idx_t* const T, idx_t* const SA, idx
             val4 = n > l ? T[SA[l]] : n + 1;
         }
     }
-    //for (size_t i = 0; i < n; i++) {
-    //    std::cout << L[i] << ' ';
-    //}
-    //std::cout << std::endl;
     for(idx = 0; idx < n; ++idx) {
         SA[idx] = L[idx];
     }
