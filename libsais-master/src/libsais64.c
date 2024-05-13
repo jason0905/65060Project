@@ -30,6 +30,7 @@ Please see the file LICENSE for full copyright information.
 #include <string.h>
 #include <limits.h>
 
+
 #if defined(LIBSAIS_OPENMP)
     #include <omp.h>
 #else
@@ -6252,8 +6253,8 @@ static void libsais64_convert_inplace_32u_to_64u(uint32_t * V, fast_sint_t omp_b
     }
 }
 
-static void libsais64_convert_inplace_64u_to_32u(uint64_t * V, fast_sint_t omp_block_start, fast_sint_t omp_block_size)
-{
+static void libsais64_convert_inplace_64u_to_32u(uint32_t * V, fast_sint_t omp_block_start, fast_sint_t omp_block_size)
+{ //Edited 64->32
     fast_sint_t i, j;
     for (i = omp_block_start, j = omp_block_start + omp_block_size; i < j; i += 1) 
     {
@@ -6304,10 +6305,10 @@ static sa_sint_t libsais64_main_32s_recursion(sa_sint_t * RESTRICT T, sa_sint_t 
         sa_sint_t new_fs = (fs + fs + n + n) <= INT32_MAX ? (fs + fs + n) : INT32_MAX - n;
         if ((new_fs / k >= 4) || (new_fs >= fs))
         {
-            libsais64_convert_inplace_64u_to_32u((uint64_t *)T, 0, n);
+	    libsais64_convert_inplace_64u_to_32u((uint32_t *)T, 0, n); //Edited 64->32
 
 #if defined(LIBSAIS_OPENMP)
-            sa_sint_t index = libsais_int_omp((int32_t *)T, (int32_t *)SA, (int32_t)n, (int32_t)k, (int32_t)new_fs, (int32_t)threads);
+	    sa_sint_t index = libsais_int_omp((int32_t *)T, (int32_t *)SA, (int32_t)n, (int32_t)k, (int32_t)new_fs, (int32_t)threads);
 #else
             sa_sint_t index = libsais_int((int32_t *)T, (int32_t *)SA, (int32_t)n, (int32_t)k, (int32_t)new_fs);
 #endif
