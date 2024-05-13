@@ -427,14 +427,15 @@ static_assert(sizeof(uint48_t) == 6, "sizeof uint48 is wrong");
 
 using auto_buffer_type = nullptr_t;
 template<typename buffer_type, typename index_type>
-using get_buffer_type =
-typename std::conditional<
-    std::is_same_v<buffer_type, auto_buffer_type>,
-    typename std::conditional<
-        (sizeof(index_type) > 5),
-        uint40_t,
-        index_type>::type,
-    buffer_type>::type;
+using get_buffer_type = index_type; //Disable memory savings
+/* typename std::conditional<
+ *     std::is_same_v<buffer_type, auto_buffer_type>,
+ *     typename std::conditional<
+ *         (sizeof(index_type) > 5),
+ *         uint40_t,
+ *         index_type>::type,
+ *     buffer_type>::type;
+ */
 
 template<typename buffer_type, typename index_type, typename used_buffer_type>
 constexpr bool check_buffer_type =
