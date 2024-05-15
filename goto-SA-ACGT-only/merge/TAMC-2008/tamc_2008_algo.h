@@ -302,7 +302,8 @@ void TAMC2008_merge
 #endif
 	
 	_RandomAccessIter lMerged 
-		= local_merges<_RandomAccessIter, __rotate, _ValueTp>(first1, last, bStart_adapted, bds1, bds2, k_adapted, (first2 - first1) / k);
+		= local_merges<_RandomAccessIter, __rotate, _ValueTp>(first1, last, bStart_adapted, bds1, bds2, k_adapted, (first2 - first1) / k_adapted);
+    //^fixed bug here. Second occurence of k_adapted was originally just k
 
 	// In the context of the further algorithm it isn't neccessary that the buffer is sorted, however we check it
 	assert(!(buffer_undersized && !verify(bStart, bStart + bSize)));
