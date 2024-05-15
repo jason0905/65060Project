@@ -1,0 +1,60 @@
+#include <iostream>
+#include <omp.h>
+#include <stdio.h> 
+#include <stdlib.h>
+#include <time.h> 
+#include "gsaca-double-sort-par.hpp"
+#include "parse_fasta.h"
+
+ 
+int main(int argc, char *argv[]) 
+{ 
+    // Calculate the time taken by fun() 
+    clock_t t;
+    char *string = NULL; 
+    //Turns out this is OK to compile in C++ as well
+    ssize_t len = parse_fasta_upper(argv[1], &string);
+    if (len <= 0)
+	return 1;
+    int count = argc < 3 ? 1 : atoi(argv[2]);
+    int threads = argc < 4 ? 1 : atoi(argv[3]);
+    printf("Beginning testing with genome of length %ld\n", len);
+    char *string_start = string;
+    for (int j=0; j < count; j++) {
+        t = clock(); 
+	double start_time = omp_get_wtime();
+	//We have to modify the string to add a 0 byte at the start
+	//There is extra space at the end due to not including headers
+	//But we still go through moving the string one byte to 
+	//introduce a 0 byte at the start and give some penalty.
+	for (size_t i = len; i > 0; i--) {
+	    string_start[i] = string_start[i-1];
+	}
+	string_start[0] = 0;
+	//printf("\"%s\"\n", string_start+1);
+	//string[0] = string[len-1] = 0;
+        uint64_t *array = (uint64_t*) malloc((len+2) * sizeof(uint64_t));
+	gsaca_ds1_par((unsigned char *) string_start, array, len+2, threads);
+	//gsaca_dsh((unsigned char *) string, array, len);
+	//Now, we have to simulate modifying the output
+	//We know that the first two results in the SA are the first & last 0 bytes.
+	//The real array starts at 2, and We decrement all other entries by 1 to 
+	//account for the 0th entry being the whole string starting with \0
+	for (size_t i = 2; i < len + 2; i++) {
+	    array[i]--;
+	}
+	t = clock() - t;
+        string_start++;	
+        double end_time = omp_get_wtime();
+        double time_taken = ((double)t)/CLOCKS_PER_SEC; // in seconds
+        printf("Clock seconds to execute: %f\n", end_time-start_time);
+        printf("CPU-seconds to execute:   %f\n", time_taken);
+	
+	free(array);
+    }
+
+    free(string);
+    
+    return 0; 
+}
+
